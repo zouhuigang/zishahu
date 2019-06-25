@@ -11,8 +11,6 @@
 #include <atlbase.h>
 #include <strsafe.h>
 #include "stdafx.h"
-#include "Amcap/amcap.h"
-#include "Amcap/status.h"
 #include "Amcap/crossbar.h"
 #include "Amcap/SampleCGB.h"
 #pragma once
@@ -42,15 +40,13 @@ protected:
 public:
 	afx_msg void OnClose();
 	virtual BOOL OnInitDialog();
-	BOOL MakeBuilder();
 	void ErrMsg(TCHAR *pText);
-	HRESULT InitCaptureGraphBuilder();
-	BOOL MakeGraph();
-	void GetAllCapDevices();
 	void IMonRelease(IMoniker *&pm);
 	void GrabOneFrame(BOOL bGrab);
 	HRESULT Init(int iDeviceID, HWND hWnd);
 	int EnumDevices(HWND hList);
+	CStatic m_preview;
+	CStatic m_preview2;
 private:
 	struct _capstuff
 	{
@@ -120,6 +116,11 @@ private:
 	IGraphBuilder *m_pGB;
 	ICaptureGraphBuilder2* m_pCapture;
 	IBaseFilter* m_pBF;
+	void GetAllCapDevices();
+	BOOL selectDevice(_capstuff *cur_gcap,int index);
+	BOOL MakeBuilder(_capstuff *cur_gcap);
+	BOOL MakeGraph(_capstuff *cur_gcap);
+	HRESULT ToPreview(int DIV_ID, _capstuff *cur_gcap);
 public:
 	afx_msg void OnBnClickedButton1();
 };
