@@ -5,6 +5,7 @@
 #include "zshu.h"
 #include "ScanDlg.h"
 #include "afxdialogex.h"
+
 // CScanDlg 对话框
 
 IMPLEMENT_DYNAMIC(CScanDlg, CDialogEx)
@@ -19,7 +20,6 @@ CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 	m_pMC = NULL;
 	m_pGB = NULL;
 	m_pCapture = NULL;
-
 }
 
 CScanDlg::~CScanDlg()
@@ -77,9 +77,14 @@ BOOL CScanDlg::MakeGraph(_capstuff *cur_gcap)
 	// we have one already
 	if (cur_gcap->pFg)
 		return TRUE;
-
 	HRESULT hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC,
 		IID_IGraphBuilder, (LPVOID *)&cur_gcap->pFg);
+
+	//新增
+	/*hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER,
+		IID_ICaptureGraphBuilder2, (LPVOID*) & cur_gcap->pFg);
+	if (FAILED(hr))
+		return hr;*/
 
 	return (hr == NOERROR) ? TRUE : FALSE;
 }
@@ -162,10 +167,90 @@ void CScanDlg::IMonRelease(IMoniker *&pm)
 HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	HRESULT hr = S_OK;//运行是否成功
 	HWND hwndPreview = NULL;//预览窗口
+	cur_gcap->pSampleGrabberFilter = NULL;
+	cur_gcap->m_pSampGrabber = NULL;
 
 
+	//插入截图程序
+	/*
+	截图处理程序
+	通过插入SampleGrabber Filter（对应的ID 为CLSID_SampleGrabber）
+	并回调应用程序实现，主要在于ISampleGrabberCB 类的成员函数BufferCB。BufferCB 是 一个可获取当前图像Sample 指针的回调函数
+	.CoCreateInstance( CLSID_SampleGrabber )
+	*/
+	hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,
+		IID_IBaseFilter, (LPVOID*)&cur_gcap->pSampleGrabberFilter);
+	if (FAILED(hr)){
+		MessageBox(TEXT("Fail to create SampleGrabber, maybe qedit.dll is not registered?"));
+		return hr;
+	}
+
+	//hr = cur_gcap->pFg->AddFilter(pSampleGrabberFilter, L"Sample Grabber");
+	hr = cur_gcap->pFg->AddFilter(cur_gcap->pSampleGrabberFilter, L"Sample Grabber");
+	if (FAILED(hr))
+		return hr;
+
+	//CLSID_FilterGraph改为CLSID_SampleGrabber
+	hr = cur_gcap->pSampleGrabberFilter->QueryInterface(IID_ISampleGrabber, (LPVOID*)&cur_gcap->m_pSampGrabber);
+	if (FAILED(hr)){
+		MessageBox(TEXT("IID_ISampleGrabber QueryInterface Fail?"));
+		return hr;
+	}
+
+	//设置视频格式
+	//set media type
+	AM_MEDIA_TYPE mediaType=0;
+	ZeroMemory(&mediaType, sizeof(AM_MEDIA_TYPE));
+	//Find the current bit depth
+	/*HDC hdc = GetDC(NULL);
+	int iBitDepth = GetDeviceCaps(hdc, BITSPIXEL);
+	g_sampleGrabberCB.m_iBitCount = iBitDepth;
+	ReleaseDC(NULL, hdc);*/
+
+	mediaType.formattype = FORMAT_VideoInfo;
+	mediaType.subtype = MEDIASUBTYPE_RGB32;
+
+	hr = cur_gcap->m_pSampGrabber->SetMediaType(&mediaType);
+	/*VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
+	g_sampleGrabberCB.m_lWidth = vih->bmiHeader.biWidth;
+	g_sampleGrabberCB.m_lHeight = vih->bmiHeader.biHeight;*/
+	//FreeMediaType(mediaType);
+
+	hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video,
+		cur_gcap->pVCap, cur_gcap->pSampleGrabberFilter, NULL);
+	if (FAILED(hr))
+		return hr;
+
+
+	hr = cur_gcap->m_pSampGrabber->GetConnectedMediaType(&mediaType);
+	if (FAILED(hr)){
+		MessageBox(TEXT("Failt to read the connected media type"));
+		return hr;
+	}
+	
+	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
+	cur_gcap->g_sampleGrabberCB.m_lWidth = vih->bmiHeader.biWidth;
+	cur_gcap->g_sampleGrabberCB.m_lHeight = vih->bmiHeader.biHeight;
+	
+
+	//只能设置SetOneShot为TRUE， 因为使用SetPositions 函数始终返回 E_NOTIMPL：Method is not supported.如果为false
+	//WaitForCompletion(INFINITE, &evCode)函数会一直等待下去。
+	hr = cur_gcap->m_pSampGrabber->SetOneShot(FALSE);
+
+	hr = cur_gcap->m_pSampGrabber->SetBufferSamples(TRUE);
+	//设置回调
+	hr = cur_gcap->m_pSampGrabber->SetCallback(&cur_gcap->g_sampleGrabberCB, 1);
+
+
+	/*
+
+	注释掉，不能截图
+	IBaseFilter *pSampleGrabberFilter;
+	hr = m_pCaptureGB->RenderStream(&PIN_CATEGORY_PREVIEW,&MEDIATYPE_Video,
+	m_pDevFilter,pSampleGrabberFilter,NULL);
+	*/
 	//连接视频捕捉图像的Filters
-	hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Interleaved, cur_gcap->pVCap, NULL, NULL);
+	/*hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Interleaved, cur_gcap->pVCap, NULL, NULL);
 	if (FAILED(hr))
 	{
 		hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, cur_gcap->pVCap, NULL, NULL);
@@ -173,7 +258,8 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 		{
 			hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, cur_gcap->pVCap, NULL, NULL);
 		}
-	}
+	}*/
+
 	// find the video window and stuff it in our window
 	CComQIPtr< IVideoWindow, &IID_IVideoWindow > pWindow = cur_gcap->pFg;           //VideoWindow接口
 	if (!pWindow)
@@ -333,6 +419,11 @@ BOOL CScanDlg::selectDevice(_capstuff *cur_gcap, int index){
 
 	cur_gcap->fCapAudioIsRelevant = TRUE;
 
+	//注册媒体控制事件
+	hr = cur_gcap->pFg->QueryInterface(IID_IMediaEventEx, (LPVOID*)&cur_gcap->m_pMediaEvent);
+	if (FAILED(hr))
+		return hr;
+
 	return TRUE;
 
 }
@@ -350,18 +441,18 @@ BOOL CScanDlg::OnInitDialog()
 	GetAllCapDevices();
 
 	//声明摄像头结构体
-	_capstuff gcap_1 = { sizeof(_capstuff) };
-	_capstuff gcap_2 = { sizeof(_capstuff) };
+	//_capstuff gcap_1 = { sizeof(_capstuff) };
+	//_capstuff gcap_2 = { sizeof(_capstuff) };
 	selectDevice(&gcap_1,0);
 	selectDevice(&gcap_2,1);
 	
 
 
 	//将视频数据显示到mfc界面上，传入容器的id
-	ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
-
 	ToPreview(IDC_PREVIEW_AVI, &gcap_2);
-
+	ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
+	
+	
 
 
 	MessageBox(TEXT("打开摄像头成功"));
@@ -369,9 +460,66 @@ BOOL CScanDlg::OnInitDialog()
 	// 异常:  OCX 属性页应返回 FALSE
 }
 
+/*
+void save(){
+long evCode = 0;
+long lBufferSize = 0;
+BYTE *p;
+gcap_1.m_pSampGrabber->GetCurrentBuffer(&lBufferSize, NULL);
+p = new BYTE[lBufferSize];
+gcap_1.m_pSampGrabber->GetCurrentBuffer(&lBufferSize, (LONG*)p);// get Current buffer
+g_sampleGrabberCB.SaveBitmap(p, lBufferSize); //save bitmap
+delete[] p;
+p = NULL;
+
+CString str;
+str.Format(_T("点击拍照啦！！！，获取到的长度为%d"), lBufferSize);
+MessageBox(str);
+}
+*/
+
+
 
 void CScanDlg::OnBnClickedButton1()
 {
 	// TODO:  在此添加控件通知处理程序代码
+	//摄像机名称
+	StringCchCat(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
+	gcap_1.g_sampleGrabberCB.m_bGetPicture = TRUE;
+
+	//摄像机2的名称
+	StringCchCat(gcap_2.g_sampleGrabberCB.m_cameraName, 50, TEXT("buy"));
+	gcap_2.g_sampleGrabberCB.m_bGetPicture = TRUE;
+
+
+	CString str;
+	str.Format(_T("点击拍照啦！！"));
+
+	MessageBox(str);
+
+
+
+
+	/*HRESULT hr;
+	long evCode = 0;
+	long lBufferSize = 0;
+	BYTE *p;
+	hr = m_pMediaEvent->WaitForCompletion(INFINITE, &evCode);
+	if (SUCCEEDED(hr))
+	{
+		switch (evCode)
+		{
+		case EC_COMPLETE:
+			m_pSampGrabber->GetCurrentBuffer(&lBufferSize, NULL);
+			p = new BYTE[lBufferSize];
+			m_pSampGrabber->GetCurrentBuffer(&lBufferSize, (LONG*)p);// get Current buffer
+			g_sampleGrabberCB.SaveBitmap(p, lBufferSize); //save bitmap
+			delete[] p;
+			p = NULL;
+			break;
+		default:
+			break;
+		}
+	}*/
 	
 }

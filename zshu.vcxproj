@@ -111,6 +111,8 @@
     <ClInclude Include="Amcap\crossbar.h" />
     <ClInclude Include="Amcap\SampleCGB.h" />
     <ClInclude Include="Amcap\status.h" />
+    <ClInclude Include="ImageFormatConversion.h" />
+    <ClInclude Include="SampleGrabberCallback.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="stdafx.h" />
@@ -123,6 +125,8 @@
     <ClCompile Include="Amcap\crossbar.cpp" />
     <ClCompile Include="Amcap\SampleCGB.cpp" />
     <ClCompile Include="Amcap\status.cpp" />
+    <ClCompile Include="ImageFormatConversion.cpp" />
+    <ClCompile Include="SampleGrabberCallback.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

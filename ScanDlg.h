@@ -13,6 +13,14 @@
 #include "stdafx.h"
 #include "Amcap/crossbar.h"
 #include "Amcap/SampleCGB.h"
+
+#pragma include_alias( "dxtrans.h", "qedit.h" )
+#define __IDxtCompositor_INTERFACE_DEFINED__
+#define __IDxtAlphaSetter_INTERFACE_DEFINED__
+#define __IDxtJpeg_INTERFACE_DEFINED__
+#define __IDxtKey_INTERFACE_DEFINED__
+#include "qedit.h"
+#include "SampleGrabberCallback.h"
 #pragma once
 
 
@@ -108,6 +116,10 @@ private:
 		LONG NumberOfVideoInputs;
 		HMENU hMenuPopup;
 		int iNumVCapDevices;
+		ISampleGrabber *m_pSampGrabber;//为了截图引入qedit
+		IMediaEventEx *m_pMediaEvent;//媒体控制
+		IBaseFilter *pSampleGrabberFilter;//截图变量
+		SampleGrabberCallback g_sampleGrabberCB;
 	} gcap;
 
 	IMediaControl* m_pMC;
@@ -121,6 +133,8 @@ private:
 	BOOL MakeBuilder(_capstuff *cur_gcap);
 	BOOL MakeGraph(_capstuff *cur_gcap);
 	HRESULT ToPreview(int DIV_ID, _capstuff *cur_gcap);
+	_capstuff gcap_1;//摄像头1
+	_capstuff gcap_2;//摄像头2
 public:
 	afx_msg void OnBnClickedButton1();
 };
