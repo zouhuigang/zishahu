@@ -199,7 +199,7 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 
 	//设置视频格式
 	//set media type
-	AM_MEDIA_TYPE mediaType=0;
+	AM_MEDIA_TYPE mediaType;
 	ZeroMemory(&mediaType, sizeof(AM_MEDIA_TYPE));
 	//Find the current bit depth
 	/*HDC hdc = GetDC(NULL);
