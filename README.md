@@ -43,6 +43,12 @@ MJPG是压缩的一种编码格式，跟jpg压缩格式是不一样的。
 抓图参考例子：DXSDK\Samples\C++\DirectShow\Editing\StillCap
 
 
+实现的效果图:
+
+
+![images](./images/2.png)
+
+
 
 ### 问题:
 
