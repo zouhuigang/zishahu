@@ -28,6 +28,22 @@ zshu
 
 
 
+//具体到本设备：
+//USB Camera有两个Pin
+//Capture pin和Still pin
+//Capture pin用于视频流预览
+//Still pin用于响应抓拍（可以软触发和硬件触发）
+//想要使用Still pin，必须先连接上Capture pin，才能正常使用Still pin
+
+
+YUY2跟RGB是不一样的。
+MJPG是压缩的一种编码格式，跟jpg压缩格式是不一样的。
+如果你要拍照，只在在TransformFilter里抓图就行了。
+要存储为BMP就直接按BMP文件的格式存储就行了，要是想存为JPG的就得用jpeblib库自己再实现压缩后再存储。
+抓图参考例子：DXSDK\Samples\C++\DirectShow\Editing\StillCap
+
+
+
 ### 问题:
 
 Q：

@@ -57,6 +57,11 @@ HRESULT STDMETHODCALLTYPE SampleGrabberCallback::BufferCB(double Time, BYTE *pBu
 
 	//MessageBox(NULL, TEXT("调用啦"), TEXT("Message"), MB_OK);
 	SaveBitmap(pBuffer, BufferLen);
+	/*char FileName[256];
+	sprintf_s(FileName, "capture_%d.yuv", (int)GetTickCount());
+	FILE * out = fopen(FileName, "wb");
+	fwrite(pBuffer, 1, BufferLen, out);
+	fclose(out);*/
 
 	m_bGetPicture = FALSE;
 	return S_OK;
@@ -86,13 +91,14 @@ BOOL  SampleGrabberCallback::SaveBitmap(BYTE * pBuffer, long lBufferSize)
 	HANDLE hf = CreateFile(
 		m_chSwapStr, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hf == INVALID_HANDLE_VALUE)return 0;
+
 	// 写文件头 
 	BITMAPFILEHEADER bfh;
 	memset(&bfh, 0, sizeof(bfh));
-	bfh.bfType = 0x4D42;
+	bfh.bfType = 'MB';
 	bfh.bfSize = sizeof(bfh)+lBufferSize + sizeof(BITMAPINFOHEADER);
 	bfh.bfOffBits = sizeof(BITMAPINFOHEADER)+sizeof(BITMAPFILEHEADER);
-
+	
 	DWORD dwWritten = 0;
 	WriteFile(hf, &bfh, sizeof(bfh), &dwWritten, NULL);
 	// 写位图格式

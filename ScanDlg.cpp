@@ -184,9 +184,8 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 		MessageBox(TEXT("Fail to create SampleGrabber, maybe qedit.dll is not registered?"));
 		return hr;
 	}
-
-	//hr = cur_gcap->pFg->AddFilter(pSampleGrabberFilter, L"Sample Grabber");
-	hr = cur_gcap->pFg->AddFilter(cur_gcap->pSampleGrabberFilter, L"Sample Grabber");
+	
+	hr = cur_gcap->pFg->AddFilter(cur_gcap->pSampleGrabberFilter, L"Grabber");
 	if (FAILED(hr))
 		return hr;
 
@@ -199,6 +198,16 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 
 	//设置视频格式
 	//set media type
+	CMediaType VideoType;
+	VideoType.SetType(&MEDIATYPE_Video);
+	VideoType.SetSubtype(&MEDIASUBTYPE_RGB24);
+	hr = cur_gcap->m_pSampGrabber->SetMediaType(&VideoType); // shouldn't fail
+	if (FAILED(hr))
+	{
+		MessageBox(TEXT("Could not set media type"));
+		return hr;
+	}
+
 	AM_MEDIA_TYPE mediaType;
 	ZeroMemory(&mediaType, sizeof(AM_MEDIA_TYPE));
 	//Find the current bit depth
@@ -208,18 +217,35 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	ReleaseDC(NULL, hdc);*/
 
 	mediaType.formattype = FORMAT_VideoInfo;
-	mediaType.subtype = MEDIASUBTYPE_RGB32;
+	mediaType.subtype = MEDIASUBTYPE_RGB24;//MEDIASUBTYPE_RGB32
 
-	hr = cur_gcap->m_pSampGrabber->SetMediaType(&mediaType);
+	//hr = cur_gcap->m_pSampGrabber->SetMediaType(&mediaType);
 	/*VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
 	g_sampleGrabberCB.m_lWidth = vih->bmiHeader.biWidth;
 	g_sampleGrabberCB.m_lHeight = vih->bmiHeader.biHeight;*/
 	//FreeMediaType(mediaType);
-
-	hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video,
+	
+	hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video,
 		cur_gcap->pVCap, cur_gcap->pSampleGrabberFilter, NULL);
 	if (FAILED(hr))
 		return hr;
+
+	//加入DirectShow中自带的SampleGrabber Filter
+	/*hr = cur_gcap->pFg->AddFilter(pGrabberStill, L"Still Sample Grabber");
+	if (FAILED(hr))
+	{
+		printf("Couldn't add sample grabber to graph!  hr=0x%x\n", hr);
+		// Return an error.
+	}
+
+	//加入DirectShow中自带的NullRender Filter
+	hr = cur_gcap->pFg->AddFilter(pNull, L"NullRender");
+	if (FAILED(hr))
+	{
+		printf("Couldn't add null to graph!  hr=0x%x\n", hr);
+		return hr;
+	}*/
+
 
 
 	hr = cur_gcap->m_pSampGrabber->GetConnectedMediaType(&mediaType);
@@ -237,7 +263,7 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	//WaitForCompletion(INFINITE, &evCode)函数会一直等待下去。
 	hr = cur_gcap->m_pSampGrabber->SetOneShot(FALSE);
 
-	hr = cur_gcap->m_pSampGrabber->SetBufferSamples(TRUE);
+	hr = cur_gcap->m_pSampGrabber->SetBufferSamples(FALSE);
 	//设置回调
 	hr = cur_gcap->m_pSampGrabber->SetCallback(&cur_gcap->g_sampleGrabberCB, 1);
 
@@ -449,8 +475,8 @@ BOOL CScanDlg::OnInitDialog()
 
 
 	//将视频数据显示到mfc界面上，传入容器的id
-	ToPreview(IDC_PREVIEW_AVI, &gcap_2);
 	ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
+	ToPreview(IDC_PREVIEW_AVI, &gcap_2);
 	
 	
 
@@ -484,11 +510,11 @@ void CScanDlg::OnBnClickedButton1()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	//摄像机名称
-	StringCchCat(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
+	StringCchPrintf(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
 	gcap_1.g_sampleGrabberCB.m_bGetPicture = TRUE;
 
 	//摄像机2的名称
-	StringCchCat(gcap_2.g_sampleGrabberCB.m_cameraName, 50, TEXT("buy"));
+	StringCchPrintf(gcap_2.g_sampleGrabberCB.m_cameraName, 50, TEXT("buy"));
 	gcap_2.g_sampleGrabberCB.m_bGetPicture = TRUE;
 
 
