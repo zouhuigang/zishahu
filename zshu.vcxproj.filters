@@ -54,6 +54,12 @@
     <ClInclude Include="ImageFormatConversion.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="zkfinger\zkfpengx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SignUp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -84,6 +90,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ImageFormatConversion.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="zkfinger\zkfpengx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SignUp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

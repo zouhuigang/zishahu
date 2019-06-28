@@ -54,7 +54,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>D:\BaiduNetdiskDownload\Windows系统\SDK\SDK\USBCamera_SDK\DirectShow\Samples\C++\DirectShow\BaseClasses\Debug_Unicode;D:\BaiduNetdiskDownload\Windows系统\SDK\SDK\USBCamera_SDK\DirectShow\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -115,8 +115,10 @@
     <ClInclude Include="SampleGrabberCallback.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScanDlg.h" />
+    <ClInclude Include="SignUp.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="zkfinger\zkfpengx.h" />
     <ClInclude Include="zshu.h" />
     <ClInclude Include="zshuDlg.h" />
   </ItemGroup>
@@ -128,10 +130,12 @@
     <ClCompile Include="ImageFormatConversion.cpp" />
     <ClCompile Include="SampleGrabberCallback.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
+    <ClCompile Include="SignUp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="zkfinger\zkfpengx.cpp" />
     <ClCompile Include="zshu.cpp" />
     <ClCompile Include="zshuDlg.cpp" />
   </ItemGroup>
@@ -149,7 +153,7 @@
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties RESOURCE_FILE="zshu.rc" />
+      <UserProperties RESOURCE_FILE="zshu.rc" _x007B_CA69969C-2F27-41D3-954D-A48B941C3BA7_x007D_="CZkfpengx1" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

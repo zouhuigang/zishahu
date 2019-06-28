@@ -7,6 +7,7 @@
 #include "zshuDlg.h"
 #include "afxdialogex.h"
 #include "ScanDlg.h"
+#include "SignUp.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -64,6 +65,7 @@ BEGIN_MESSAGE_MAP(CzshuDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON1, &CzshuDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CzshuDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -159,5 +161,13 @@ void CzshuDlg::OnBnClickedButton1()
 	// TODO:  在此添加控件通知处理程序代码
 	ShowWindow(SW_HIDE);
 	CScanDlg dlg;
+	dlg.DoModal();
+}
+
+
+void CzshuDlg::OnBnClickedButton2()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	CSignUp dlg;
 	dlg.DoModal();
 }

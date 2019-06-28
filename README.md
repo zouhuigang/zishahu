@@ -1,4 +1,44 @@
-zshu
+### 紫砂壶上链系统
+
+
+### 指纹仪(中控指纹仪，型号:ZK4500)
+
+
+之前做的C#的指纹项目[https://github.com/zouhuigang/fingerprint](https://github.com/zouhuigang/fingerprint)
+
+
+1.安装指纹驱动软件，然后重启电脑.
+
+https://www.zkteco.com/cn/product_detail/220.html
+
+https://detail.1688.com/offer/44197330592.html?spm=a261b.2187593.1998088710.87.Sjb55l
+
+https://www.eastcontrol.cn/qudongxiazai/361.html
+
+
+
+
+### 摄像头
+
+
+### 依赖
+
+里面有个acmp开发程序，还有一个文档:
+
+	链接：https://pan.baidu.com/s/1n6DBnIDr9N5SVqbytWdeFQ 
+	提取码：v19s 
+	复制这段内容后打开百度网盘手机App，操作更方便哦
+
+转成mfc程序，在印象笔记国际版里面有一篇文章介绍。
+
+https://www.evernote.com/l/AqWMXW9j6fhFWLYuBXgAwLK-OxoBZvoqVUA/
+
+
+---
+
+
+
+
 
 
 ![images](./images/1.png)
