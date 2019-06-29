@@ -21,6 +21,11 @@
 #define __IDxtKey_INTERFACE_DEFINED__
 #include "qedit.h"
 #include "SampleGrabberCallback.h"
+
+//摄像头容器位置
+#define IDC_CARAME_INIT 10000
+
+
 #pragma once
 
 
@@ -53,8 +58,8 @@ public:
 	void GrabOneFrame(BOOL bGrab);
 	HRESULT Init(int iDeviceID, HWND hWnd);
 	int EnumDevices(HWND hList);
-	CStatic m_preview;
-	CStatic m_preview2;
+	CStatic m_preview_1;
+	CStatic m_preview_2;
 private:
 	struct _capstuff
 	{
@@ -119,7 +124,8 @@ private:
 		ISampleGrabber *m_pSampGrabber;//为了截图引入qedit
 		IMediaEventEx *m_pMediaEvent;//媒体控制
 		IBaseFilter *pSampleGrabberFilter;//截图变量
-		SampleGrabberCallback g_sampleGrabberCB;
+		SampleGrabberCallback g_sampleGrabberCB;//回调
+		int index;//摄像头索引
 	} gcap;
 
 	IMediaControl* m_pMC;
@@ -133,8 +139,9 @@ private:
 	BOOL MakeBuilder(_capstuff *cur_gcap);
 	BOOL MakeGraph(_capstuff *cur_gcap);
 	HRESULT ToPreview(int DIV_ID, _capstuff *cur_gcap);
-	_capstuff gcap_1;//摄像头1
-	_capstuff gcap_2;//摄像头2
+	struct _capstuff gcapList[2];//摄像头列表,存储2个摄像头
+	int carameCount;//读取到的摄像头个数
+
 public:
 	afx_msg void OnBnClickedButton1();
 };

@@ -33,8 +33,8 @@ void CScanDlg::ErrMsg(TCHAR *pText){
 void CScanDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_PREVIEW_AVI, m_preview);
-	DDX_Control(pDX, IDC_PREVIEW_AVI2, m_preview2);
+	DDX_Control(pDX, IDC_PREVIEW_AVI_1, m_preview_1);
+	DDX_Control(pDX, IDC_PREVIEW_AVI_2, m_preview_2);
 }
 
 
@@ -147,6 +147,9 @@ void CScanDlg::GetAllCapDevices()
 		uIndex++;
 	}
 	pEm->Release();
+
+	//摄像头个数
+	carameCount = uIndex;
 }
 
 void CScanDlg::IMonRelease(IMoniker *&pm)
@@ -466,17 +469,41 @@ BOOL CScanDlg::OnInitDialog()
 	//列举摄像头驱动
 	GetAllCapDevices();
 
-	//声明摄像头结构体
-	//_capstuff gcap_1 = { sizeof(_capstuff) };
-	//_capstuff gcap_2 = { sizeof(_capstuff) };
-	selectDevice(&gcap_1,0);
-	selectDevice(&gcap_2,1);
+	for (int i = 0; i < carameCount; i++){
+		//声明摄像头结构体
+		//_capstuff gcap_1 = { sizeof(_capstuff) };
+		//_capstuff gcap_2 = { sizeof(_capstuff) };
+		//selectDevice(&gcap_1, 0);
+		//selectDevice(&gcap_2, 1);
+
+
+		//将视频数据显示到mfc界面上，传入容器的id
+		//ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
+		//ToPreview(IDC_PREVIEW_AVI, &gcap_2);
+
+		//动态创建摄像头容器
+		//pPictureControl->Create(_T(""), WS_CHILD | WS_VISIBLE | SS_BITMAP, CRect(20, 10, 80, 40), this, IDC_CARAME_INIT + i);
+
+		if (i>=2){
+			break;
+		}
+
+		//初始化摄像头
+		selectDevice(&gcapList[i], i);
+		//将摄像头显示到对应的mfc容器
+		if (i == 0){
+			ToPreview(IDC_PREVIEW_AVI_1, &gcapList[i]);
+		}
+		else if (i==1){
+			ToPreview(IDC_PREVIEW_AVI_2, &gcapList[i]);
+		}
+		
+	}
+
+	
 	
 
 
-	//将视频数据显示到mfc界面上，传入容器的id
-	ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
-	ToPreview(IDC_PREVIEW_AVI, &gcap_2);
 	
 	
 
@@ -510,12 +537,18 @@ void CScanDlg::OnBnClickedButton1()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	//摄像机名称
-	StringCchPrintf(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
-	gcap_1.g_sampleGrabberCB.m_bGetPicture = TRUE;
+	//StringCchPrintf(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
+	//gcap_1.g_sampleGrabberCB.m_bGetPicture = TRUE;
 
-	//摄像机2的名称
-	StringCchPrintf(gcap_2.g_sampleGrabberCB.m_cameraName, 50, TEXT("buy"));
-	gcap_2.g_sampleGrabberCB.m_bGetPicture = TRUE;
+
+	for (int i = 0; i < carameCount; i++){
+		if (i >= 2){
+			break;
+		}
+		//摄像机2的名称
+		StringCchPrintf(gcapList[i].g_sampleGrabberCB.m_cameraName, 50, TEXT("carame_")+i);
+		gcapList[i].g_sampleGrabberCB.m_bGetPicture = TRUE;
+	}
 
 
 	CString str;
