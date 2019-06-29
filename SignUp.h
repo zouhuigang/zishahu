@@ -55,4 +55,5 @@ private:
 public:
 	void OnOnfingertouchingZkfpengx1();
 	void OnOnfingerleavingZkfpengx1();
+	afx_msg void OnClose();
 };
