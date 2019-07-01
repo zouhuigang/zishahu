@@ -60,6 +60,12 @@
     <ClInclude Include="SignUp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="db\sqlite3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="database.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -96,6 +102,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SignUp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="db\sqlite3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="database.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

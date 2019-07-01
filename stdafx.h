@@ -33,7 +33,7 @@
 
 #include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
 
-
+#import "C:\Program Files\Common Files\System\ado\msado15.dll" no_namespace rename("EOF", "rsEOF")
 
 
 

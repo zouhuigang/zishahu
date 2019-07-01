@@ -39,6 +39,8 @@ private:
 	CString	m_Regname;
 	CString	m_Hint;
 	CZKFPEngX m_zkfp;
+	CStatic m_startSignUp;
+	CStatic m_unSignUp;
 public:
 	afx_msg void ConnectionFingerprint();//连接指纹仪
 	afx_msg void RegisteredFingerprint();//注册指纹
@@ -56,4 +58,9 @@ public:
 	void OnOnfingertouchingZkfpengx1();
 	void OnOnfingerleavingZkfpengx1();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedStartSignup();
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedUnsignup();
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedGetcode();
 };

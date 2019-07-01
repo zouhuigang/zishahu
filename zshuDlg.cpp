@@ -8,7 +8,7 @@
 #include "afxdialogex.h"
 #include "ScanDlg.h"
 #include "SignUp.h"
-
+#include "database.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -101,6 +101,11 @@ BOOL CzshuDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO:  在此添加额外的初始化代码
+
+	//将本地数据库中的指纹读取进高速缓存中
+	database a;
+	a.LoadFingerprintList();
+
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }

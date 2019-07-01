@@ -111,6 +111,8 @@
     <ClInclude Include="Amcap\crossbar.h" />
     <ClInclude Include="Amcap\SampleCGB.h" />
     <ClInclude Include="Amcap\status.h" />
+    <ClInclude Include="database.h" />
+    <ClInclude Include="db\sqlite3.h" />
     <ClInclude Include="ImageFormatConversion.h" />
     <ClInclude Include="SampleGrabberCallback.h" />
     <ClInclude Include="Resource.h" />
@@ -127,6 +129,8 @@
     <ClCompile Include="Amcap\crossbar.cpp" />
     <ClCompile Include="Amcap\SampleCGB.cpp" />
     <ClCompile Include="Amcap\status.cpp" />
+    <ClCompile Include="database.cpp" />
+    <ClCompile Include="db\sqlite3.c" />
     <ClCompile Include="ImageFormatConversion.cpp" />
     <ClCompile Include="SampleGrabberCallback.cpp" />
     <ClCompile Include="ScanDlg.cpp" />
