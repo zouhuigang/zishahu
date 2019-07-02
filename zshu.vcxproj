@@ -119,6 +119,7 @@
     <ClInclude Include="ScanDlg.h" />
     <ClInclude Include="SignUp.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="table\FingerTpl.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="zkfinger\zkfpengx.h" />
     <ClInclude Include="zshu.h" />
@@ -139,6 +140,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="table\FingerTpl.cpp" />
     <ClCompile Include="zkfinger\zkfpengx.cpp" />
     <ClCompile Include="zshu.cpp" />
     <ClCompile Include="zshuDlg.cpp" />

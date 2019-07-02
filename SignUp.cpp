@@ -5,7 +5,6 @@
 #include "zshu.h"
 #include "SignUp.h"
 #include "afxdialogex.h"
-#include "database.h"
 #include <string>
 using namespace std;
 
@@ -51,21 +50,36 @@ END_MESSAGE_MAP()
 
 
 // CSignUp 消息处理程序
-
+//有问题，算不出长度
+//https://bbs.csdn.net/topics/340158422
+template<class T>
+int length(T *a){
+	return (int)(sizeof(a) / sizeof(a[0]));
+}
 
 BOOL CSignUp::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-
 	//指纹库初始化
 	FingerCount = 0;
 	fpcHandle = m_zkfp.CreateFPCacheDB();
 	VariantInit(&FRegTemplate);
 
+	tplList = ldb.LoadFingerprintList();
+	CString strTemp;
+	for (int i = 0; i < ldb.FingerCount; i++) {
+		//TRACE("=====================================new mobile = %s,id=%d\n", tplList[i].mobile, tplList[i].id);
+		strTemp = tplList[i].template_10;
+		//AddRegTemplateStrToFPCacheDB(gnFPCHandle,指纹ID(我一般用员工代码+手指号),指纹字段2)
+		m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, tplList[i].id, (LPCTSTR)strTemp);
+	}
+	free(tplList);
+
 	//自动连接指纹仪
 	ConnectionFingerprint();
+
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
@@ -189,7 +203,8 @@ void CSignUp::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 		if (fi == -1)
 			MessageBox(TEXT("验证失败"));
 		else{
-			sprintf(buffer, "验证成功,手机号为 = %s 分数 = %d  进程号 = %d", FFingerNames[fi], Score, ProcessNum);
+			FingerTpl *user = ldb.GetUserInfo(fi);
+			sprintf(buffer, "验证成功,手机号为 = %s 分数 = %d  进程号 = %d", user->GetMobile(), Score, ProcessNum);
 			m_msg = buffer;
 			UpdateData(FALSE);
 		}
@@ -223,22 +238,23 @@ void CSignUp::OnOnenrollZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 		m_zkfp.SaveTemplate(_T("c:\\fingerprint.tpl"), ATemplate); 
 
 		//插入数据库
-		database a;
-
-	
+		//database a;
 		std::string strStr(CW2A(m_mobile.GetString()));       //CString 转string
 		std::string strStr1(CW2A(sRegTemplate.GetString()));       //CString 转string
-		a.AddFingerprint(strStr, "1", strStr1);
+		int autoid = ldb.AddFingerprint(strStr, "1", strStr1);
+		if (autoid>0){
+			m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, autoid, (LPCTSTR)sRegTemplate);
+		}
+		//TRACE("=====================================autoid=%d\n", autoid);
+		
 
-		m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, FingerCount, (LPCTSTR)sRegTemplate);
-
-		UpdateData(TRUE);
+		//UpdateData(TRUE);
 
 		//CString->const char *
-		char str[1024];
+		/*char str[1024];
 		wsprintfA(str, "%ls", m_mobile);
 		strcpy(FFingerNames[FingerCount], str);
-		FingerCount = FingerCount + 1;
+		FingerCount = FingerCount + 1;*/
 	}
 	
 }
@@ -340,8 +356,23 @@ void CSignUp::OnBnClickedGetcode()
 {
 	// TODO:  在此添加控件通知处理程序代码
 	
-	database a;
-	a.new_table();
+	//database a;
+	//a.new_table();
+	//初始化指纹
+	//将本地数据库中的指纹读取进高速缓存中
+	//database a;
+	tplList = ldb.LoadFingerprintList();
+	CString strTemp;
+	for (int i = 0; i < ldb.FingerCount; i++) {
+		//TRACE("=====================================new mobile = %s,id=%d\n", tplList[i].mobile, tplList[i].id);
+		strTemp = tplList[i].template_10;
+		//AddRegTemplateStrToFPCacheDB(gnFPCHandle,指纹ID(我一般用员工代码+手指号),指纹字段2)
+		m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, tplList[i].id, (LPCTSTR)strTemp);
+	}
+	
+
+
+	free(tplList);
 
 	MessageBox(TEXT("初始化数据库"));
 }

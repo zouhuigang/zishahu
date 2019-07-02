@@ -1,6 +1,7 @@
 #pragma once
 #include "db/sqlite3.h"
 #include <string>
+#include "table/FingerTpl.h"
 using namespace std;
 /*
 int rc;
@@ -31,6 +32,15 @@ sqlite3_free_table(results); //free
 sqlite3_close(db);
 */
 
+typedef struct {
+	long id;
+	char*  mobile;
+	char*  fingerindex;
+	char*  template_10;
+}Tpl;
+
+
+
 #pragma  warning(disable:4996)
 #pragma  comment(lib,"db/sqlite3.lib")
 class database
@@ -39,11 +49,17 @@ public:
 	database();
 	~database();
 	void new_table();
-	void AddFingerprint(string mobile, string fingerindex, string template_10);
-	void LoadFingerprintList();//加载本地所有的指纹进入缓存
+	int AddFingerprint(string mobile, string fingerindex, string template_10);
+	Tpl*  LoadFingerprintList();//加载本地所有的指纹进入缓存
+	int FingerCount;//指纹的个数
+	static int ProcessInt(void* notUsed, int colCount, char** colData, char** colNames);
+	FingerTpl* GetUserInfo(long autoid);
+	static int ProcessOneTpl(void* notUsed, int colCount, char** colData, char** colNames);
+
 private:
 	sqlite3 *db;
 	char *zErrMsg = 0;
 	int rc;
+	char** pResult;
 };
 

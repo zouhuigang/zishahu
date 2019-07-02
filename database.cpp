@@ -4,45 +4,11 @@
 #include "afx.h"
 using namespace std;
 
-
-//函数功能：将utf8字符转gb2312字符
-//参数：    const char* utf8[IN]                   -- UTF8字符
-//返回值：  char*                                  -- gb2312字符
-char* U2G(const char* utf8)
-{
-	int len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[len + 1];
-	memset(wstr, 0, len + 1);
-	MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wstr, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-	char* str = new char[len + 1];
-	memset(str, 0, len + 1);
-	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len, NULL, NULL);
-	if (wstr) delete[] wstr;
-	return str;
-}
-
-//unicode字符转utf8
-//函数功能：将gb2312字符转换为utf8字符
-//参数：    const char* gb2312[IN]                   -- gb2312字符
-//返回值：  char*                                    -- UTF8字符
-char* G2U(const char* gb2312)
-{
-	int len = MultiByteToWideChar(CP_ACP, 0, gb2312, -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[len + 1];
-	memset(wstr, 0, len + 1);
-	MultiByteToWideChar(CP_ACP, 0, gb2312, -1, wstr, len);
-	len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
-	char* str = new char[len + 1];
-	memset(str, 0, len + 1);
-	WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, len, NULL, NULL);
-	if (wstr) delete[] wstr;
-	return str;
-}
 database::database()
 {
 	//hcu
 	rc = sqlite3_open("zsh.db", &db);
+	//_CrtSetBreakAlloc(461); //检测内存泄漏
 	
 }
 
@@ -62,6 +28,7 @@ database::~database()
 		//::MessageBox(NULL, toMSG(zErrMsg), toMSG(zErrMsg), MB_OK);
 		sqlite3_free(zErrMsg);
 	}
+	sqlite3_free_table(pResult);
 	sqlite3_close(db);
 }
 
@@ -74,6 +41,35 @@ int static callback(void*para, int nCount, char** pValue, char** pName) {
 	return 0;
 }
 
+int database::ProcessInt(void* notUsed, int colCount, char** colData, char** colNames)
+{
+	int* id = (int*)notUsed;
+	*id = atoi(colData[0]);
+	return 0;
+}
+
+
+int database::ProcessOneTpl(void* notUsed, int colCount, char** colData, char** colNames)
+{
+	FingerTpl* b = (FingerTpl *)notUsed;
+	//id,mobile,fingerindex,template_10
+	b->SetId(atoi(colData[0]));
+	b->SetMobile(colData[1]);
+	/*b->SetName(colData[0]);
+	b->SetAnnotation(colData[3]);
+	b->SetStatus(atoi(colData[2]));
+	b->SetRating(atoi(colData[9]));*/
+
+	//Author* a = new Author(atoi(colData[5]), colData[4]);
+	//Publisher* p = new Publisher(atoi(colData[6]), colData[7], colData[8]);
+
+	//b->SetAuthor(a);
+	//b->SetPublisher(p);
+	//TRACE("data:%d,data:%s,data:%s,data:%s \n", colData[0], colData[1], colData[2], colData[3]);
+	return 0;
+}
+
+
 void database::new_table() {
 	const char *sql;
 
@@ -83,20 +79,29 @@ void database::new_table() {
 	sql = temp.c_str();
 	rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
 }
-void database::AddFingerprint(string mobile, string fingerindex, string template_10) {
+int database::AddFingerprint(string mobile, string fingerindex, string template_10) {
 	const char *sql;
 	string tmp;
 	tmp = "insert into template(mobile, fingerindex,template_10) values('" + mobile + "'," + fingerindex + ",'" + template_10 + "');";
 	sql = tmp.c_str();
+
+	/*rc = sqlite3_exec(db, "BEGIN;", 0, 0, &zErrMsg);
+	//执行SQL语句 
+	rc = sqlite3_exec(db, "COMMIT;", 0, 0, &zErrMsg);*/
 	
 	rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
+
+	//rc=sqlite3_exec(db, "SELECT * FROM template WHERE id=last_insert_rowid();", callback, NULL, &zErrMsg);
+	int id = 0;
+	rc = sqlite3_exec(db, "SELECT last_insert_rowid();", ProcessInt, &id, &zErrMsg);
+	return id;
+
 }
 
 //获取本地所有的指纹
-void database::LoadFingerprintList() {
+Tpl*  database::LoadFingerprintList() {
 	const char *sql;
 	string tmp;
-	char** pResult;
 	int nRow;
 	int nCol;
 
@@ -110,36 +115,63 @@ void database::LoadFingerprintList() {
 	{
 		//注意，执行失败，需要清理错误码的内存空间
 		sqlite3_free(zErrMsg);
-		return;
+		//TRACE("error===%d\n", zErrMsg);
+		return (Tpl *)NULL;
 	}
 
 	int nIndex = nCol;
 	int cnt = 0;
+	Tpl * tplList = new Tpl[nRow];
 	for (int i = 0; i<nRow; i++)
 	{
 		for (int j = 0; j<nCol; j++)
 		{
+			//TRACE("column = %s,data = %s,nIndex=%d,nCol=%d\n", U2G(pResult[j]), U2G(pResult[nIndex]), nIndex, nCol);
+			if (strcmp(pResult[j], "mobile") == 0){
+				tplList[i].mobile = pResult[nIndex];
+			}
+			else if (strcmp(pResult[j], "fingerindex") == 0){
+				tplList[i].fingerindex = pResult[nIndex];
+			}
+			else if (strcmp(pResult[j], "template_10") == 0){
+				tplList[i].template_10 = pResult[nIndex];
+			}
+			else if (strcmp(pResult[j], "id") == 0){
+				tplList[i].id = atol(pResult[nIndex]);
+			}
 			
-			TRACE("pData = %s,pData = %s\n", U2G(pResult[j]), U2G(pResult[nIndex]));
+			
 			++nIndex;
 		}
 	}
+	
 
-	/*CString pData[10] = { 0 };
-	int nIndex = nCol;
+	
 
-	for (int i = 0; i < nRow; ++i)
-	{
-		for (int j = 0; j < nCol; ++j)
-		{
-		
-			pData[j] = pResult[nIndex];
-			
-			++nIndex;
-		}
-	}*/
-
-		
-	sqlite3_free_table(pResult);
+	//释放内存
+	//delete[] tplList;
+	//TRACE("=====================================new mobile = %s\n", tplList[1].mobile);
+	FingerCount = nRow;
+	return tplList;
 }
 
+//获取个人信息
+//https://github.com/Polina-Kachanova/Project-LazyCook-/blob/5a25b14ad89fb4e1bfb9c2786fe3c9e0d47bee24/sources/Database.cpp
+FingerTpl* database::GetUserInfo(long autoid){
+	FingerTpl *tpl = new FingerTpl();
+	int rc = 0;
+	const char *sql;
+	
+	//char* errMsg;
+	//stringstream ss;
+	//ss << "select b.name, b.id, b.status_book, b.annotation, a.name, a.id, p.id, p.name, p.address, b.rating from books as b join authors as a on b.author_id = a.id join publishers as p on p.id = b.publisher_id where b.id = " << id << ";";
+
+	char tmp[128] = { 0 };
+	sprintf(tmp, "select id,mobile,fingerindex,template_10 from template where id=%d", autoid);
+	sql = tmp;
+	rc = sqlite3_exec(db, sql, ProcessOneTpl, tpl, &zErrMsg);
+	if (rc != SQLITE_OK) {
+		sqlite3_free(zErrMsg);
+	}
+	return tpl;
+}

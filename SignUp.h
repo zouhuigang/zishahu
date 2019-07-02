@@ -1,5 +1,5 @@
 #include "zkfinger/zkfpengx.h"
-
+#include "database.h"
 #pragma once
 
 
@@ -54,6 +54,8 @@ private:
 	CString m_mobile;
 	BOOL m_startRegistered;//¿ªÊ¼×¢²áÖ¸ÎÆ
 	CString m_msg;
+	Tpl *tplList;
+	database ldb;
 public:
 	void OnOnfingertouchingZkfpengx1();
 	void OnOnfingerleavingZkfpengx1();

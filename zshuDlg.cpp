@@ -1,5 +1,5 @@
 
-// zshuDlg.cpp : 实现文件
+// zshuDlg.cpp : 实锟斤拷锟侥硷拷
 //
 
 #include "stdafx.h"
@@ -14,20 +14,20 @@
 #endif
 
 
-// 用于应用程序“关于”菜单项的 CAboutDlg 对话框
+// 锟斤拷锟斤拷应锟矫筹拷锟津“癸拷锟节★拷锟剿碉拷锟斤拷锟?CAboutDlg 锟皆伙拷锟斤拷
 
 class CAboutDlg : public CDialogEx
 {
 public:
 	CAboutDlg();
 
-// 对话框数据
+// 锟皆伙拷锟斤拷锟斤拷锟斤拷
 	enum { IDD = IDD_ABOUTBOX };
 
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支锟斤拷
 
-// 实现
+// 实锟斤拷
 protected:
 	DECLARE_MESSAGE_MAP()
 };
@@ -45,7 +45,7 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CzshuDlg 对话框
+// CzshuDlg 锟皆伙拷锟斤拷
 
 
 
@@ -69,15 +69,15 @@ BEGIN_MESSAGE_MAP(CzshuDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CzshuDlg 消息处理程序
+// CzshuDlg 锟斤拷息锟斤拷锟斤拷锟斤拷锟斤拷
 
 BOOL CzshuDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// 将“关于...”菜单项添加到系统菜单中。
+	// 锟斤拷锟斤拷锟斤拷锟斤拷...锟斤拷锟剿碉拷锟斤拷锟斤拷锟接碉拷系统锟剿碉拷锟叫★拷
 
-	// IDM_ABOUTBOX 必须在系统命令范围内。
+	// IDM_ABOUTBOX 锟斤拷锟斤拷锟斤拷系统锟斤拷锟筋范围锟节★拷
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
 
@@ -95,19 +95,19 @@ BOOL CzshuDlg::OnInitDialog()
 		}
 	}
 
-	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
-	//  执行此操作
-	SetIcon(m_hIcon, TRUE);			// 设置大图标
-	SetIcon(m_hIcon, FALSE);		// 设置小图标
+	// 锟斤拷锟矫此对伙拷锟斤拷锟酵硷拷辍? 锟斤拷应锟矫筹拷锟斤拷锟斤拷锟斤拷锟节诧拷锟角对伙拷锟斤拷时锟斤拷锟斤拷芙锟斤拷远锟?
+	//  执锟叫此诧拷锟斤拷
+	SetIcon(m_hIcon, TRUE);			// 锟斤拷锟矫达拷图锟斤拷
+	SetIcon(m_hIcon, FALSE);		// 锟斤拷锟斤拷小图锟斤拷
 
-	// TODO:  在此添加额外的初始化代码
+	// TODO:  锟节达拷锟斤拷锟接讹拷锟斤拷某锟绞硷拷锟斤拷锟斤拷锟?
 
-	//将本地数据库中的指纹读取进高速缓存中
+	//锟斤拷锟斤拷锟斤拷锟斤拷锟捷匡拷锟叫碉拷指锟狡讹拷取锟斤拷锟斤拷锟劫伙拷锟斤拷锟斤拷
 	database a;
 	a.LoadFingerprintList();
 
 
-	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	return TRUE;  // 锟斤拷锟角斤拷锟斤拷锟斤拷锟斤拷锟矫碉拷锟截硷拷锟斤拷锟斤拷锟津返伙拷 TRUE
 }
 
 void CzshuDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -123,19 +123,19 @@ void CzshuDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
-// 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
+// 锟斤拷锟斤拷锟皆伙拷锟斤拷锟斤拷锟斤拷锟斤拷小锟斤拷锟斤拷钮锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷拇锟斤拷锟?
+//  锟斤拷锟斤拷锟狡革拷图锟疥。  锟斤拷锟斤拷使锟斤拷锟侥碉拷/锟斤拷图模锟酵碉拷 MFC 应锟矫筹拷锟斤拷
+//  锟解将锟缴匡拷锟斤拷远锟斤拷锟缴★拷
 
 void CzshuDlg::OnPaint()
 {
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // 用于绘制的设备上下文
+		CPaintDC dc(this); // 锟斤拷锟节伙拷锟狡碉拷锟借备锟斤拷锟斤拷锟斤拷
 
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		// 使图标在工作区矩形中居中
+		// 使图锟斤拷锟节癸拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫撅拷锟斤拷
 		int cxIcon = GetSystemMetrics(SM_CXICON);
 		int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
@@ -143,7 +143,7 @@ void CzshuDlg::OnPaint()
 		int x = (rect.Width() - cxIcon + 1) / 2;
 		int y = (rect.Height() - cyIcon + 1) / 2;
 
-		// 绘制图标
+		// 锟斤拷锟斤拷图锟斤拷
 		dc.DrawIcon(x, y, m_hIcon);
 	}
 	else
@@ -152,8 +152,8 @@ void CzshuDlg::OnPaint()
 	}
 }
 
-//当用户拖动最小化窗口时系统调用此函数取得光标
-//显示。
+//锟斤拷锟矫伙拷锟较讹拷锟斤拷小锟斤拷锟斤拷锟斤拷时系统锟斤拷锟矫此猴拷锟斤拷取锟矫癸拷锟?
+//锟斤拷示锟斤拷
 HCURSOR CzshuDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -163,7 +163,7 @@ HCURSOR CzshuDlg::OnQueryDragIcon()
 
 void CzshuDlg::OnBnClickedButton1()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	// TODO:  锟节达拷锟斤拷锟接控硷拷通知锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟?
 	ShowWindow(SW_HIDE);
 	CScanDlg dlg;
 	dlg.DoModal();
@@ -172,7 +172,7 @@ void CzshuDlg::OnBnClickedButton1()
 
 void CzshuDlg::OnBnClickedButton2()
 {
-	// TODO:  在此添加控件通知处理程序代码
+	// TODO:  锟节达拷锟斤拷锟接控硷拷通知锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟?
 	CSignUp dlg;
 	dlg.DoModal();
 }
