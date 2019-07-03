@@ -79,3 +79,7 @@ A：
 [https://sourceforge.net/projects/jsoncpp/](https://sourceforge.net/projects/jsoncpp/)
 
 [https://www.cnblogs.com/hpcpp/p/7889456.html](https://www.cnblogs.com/hpcpp/p/7889456.html)
+
+[https://github.com/commshare/testHttp/tree/73b9fdb7a5b5bc94a8e5313bab3f2b629b55255b/testPOST/ZUrl](https://github.com/commshare/testHttp/tree/73b9fdb7a5b5bc94a8e5313bab3f2b629b55255b/testPOST/ZUrl)
+
+[https://github.com/SuinegXY/WuxiaMudClient/tree/b99d65c424f95d68daeb87a01a330ca1eb42d257/Common/Util](https://github.com/SuinegXY/WuxiaMudClient/tree/b99d65c424f95d68daeb87a01a330ca1eb42d257/Common/Util)

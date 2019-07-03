@@ -7,7 +7,8 @@
 #include "afxdialogex.h"
 #include "curl/curl.h"
 #include "json/json.h"
-
+#include <stdio.h>
+#pragma comment(lib,"libcurl_a_debug.lib") 
 // CSignIn 对话框
 
 IMPLEMENT_DYNAMIC(CSignIn, CDialogEx)
@@ -37,13 +38,38 @@ BEGIN_MESSAGE_MAP(CSignIn, CDialogEx)
 END_MESSAGE_MAP()
 
 
+bool getUrl(char *filename)
+{
+	CURL *curl;
+	CURLcode res;
+	FILE *fp;
+	if ((fp = fopen(filename, "w")) == NULL)  // 返回结果用文件存储
+		return false;
+	struct curl_slist *headers = NULL;
+	headers = curl_slist_append(headers, "Accept: Agent-007");
+	curl = curl_easy_init();    // 初始化
+	if (curl)
+	{
+		//curl_easy_setopt(curl, CURLOPT_PROXY, "10.99.60.201:8080");// 代理
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);// 改协议头
+		curl_easy_setopt(curl, CURLOPT_URL, "http://www.baidu.com");
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp); //将返回的http头输出到fp指向的文件
+		curl_easy_setopt(curl, CURLOPT_HEADERDATA, fp); //将返回的html主体数据输出到fp指向的文件
+		res = curl_easy_perform(curl);   // 执行
+		if (res != 0) {
+
+			curl_slist_free_all(headers);
+			curl_easy_cleanup(curl);
+		}
+		fclose(fp);
+		return true;
+	}
+}
 // CSignIn 消息处理程序
-
-
 void CSignIn::OnBnClickedButton1()
 {
 	UpdateData(TRUE);
-	CString strValue = _T("{\"key1\":\"value1\"}");
+	/*CString strValue = _T("{\"key1\":\"value1\"}");
 	Json::Reader reader;
 	Json::Value value;
 
@@ -56,9 +82,9 @@ void CSignIn::OnBnClickedButton1()
 	{
 		temp = value["key1"].asCString();
 		MessageBox(temp);
-	}
+	}*/
 
-
+	getUrl("/tmp/get.html");
 	// click sign in
 	if (m_mobile.IsEmpty() || m_sign.IsEmpty() || m_push_time.IsEmpty()){
 		MessageBox(TEXT("指纹信息不能为空"));
