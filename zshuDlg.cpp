@@ -7,6 +7,7 @@
 #include "zshuDlg.h"
 #include "afxdialogex.h"
 #include "ScanDlg.h"
+#include "SignIn.h"
 #include "SignUp.h"
 #include "database.h"
 #ifdef _DEBUG
@@ -102,9 +103,9 @@ BOOL CzshuDlg::OnInitDialog()
 
 	// TODO:  �ڴ����Ӷ���ĳ�ʼ������?
 
-	//���������ݿ��е�ָ�ƶ�ȡ�����ٻ�����
-	database a;
-	a.LoadFingerprintList();
+	//create table
+	//database a;
+	//a.new_table();
 
 
 	return TRUE;  // ���ǽ��������õ��ؼ������򷵻� TRUE
@@ -165,8 +166,10 @@ void CzshuDlg::OnBnClickedButton1()
 {
 	// TODO:  �ڴ����ӿؼ�֪ͨ�����������?
 	ShowWindow(SW_HIDE);
-	CScanDlg dlg;
+	CSignIn dlg;
 	dlg.DoModal();
+	//CScanDlg dlg;
+	//dlg.DoModal();
 }
 
 

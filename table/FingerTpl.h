@@ -8,11 +8,17 @@ protected:
 	char*  mobile;
 	char*  fingerindex;
 	char*  template_10;
+	char*  push_time;
+	char*  sign;//Ç©Ãû
 public:
 	FingerTpl();
 	virtual ~FingerTpl();
 	void SetId(int id);
 	char* GetMobile();
 	void SetMobile(char* mobile);
+	char*  GetPushTime();
+	void SetPushTime(char* push_time);
+	char* GetSign();
+	void SetSign(char* sign);
 };
 

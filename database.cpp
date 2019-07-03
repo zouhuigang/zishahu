@@ -2,6 +2,7 @@
 #include "database.h"
 #include <string>
 #include "afx.h"
+#include "utils/md5.h"
 using namespace std;
 
 database::database()
@@ -52,9 +53,11 @@ int database::ProcessInt(void* notUsed, int colCount, char** colData, char** col
 int database::ProcessOneTpl(void* notUsed, int colCount, char** colData, char** colNames)
 {
 	FingerTpl* b = (FingerTpl *)notUsed;
-	//id,mobile,fingerindex,template_10
+	//id,mobile,fingerindex,template_10,push_time,sign
 	b->SetId(atoi(colData[0]));
 	b->SetMobile(colData[1]);
+	b->SetPushTime(colData[4]);
+	b->SetSign(colData[5]);
 	/*b->SetName(colData[0]);
 	b->SetAnnotation(colData[3]);
 	b->SetStatus(atoi(colData[2]));
@@ -75,14 +78,26 @@ void database::new_table() {
 
 	string temp;
 	//userid,fingerindex,template_10,template_9,realname
-	temp = "CREATE TABLE template (id INTEGER   PRIMARY KEY autoincrement NOT NULL,mobile   TEXT   NOT NULL,fingerindex  INT  NOT NULL,template_10  TEXT  NOT NULL);";
+	temp = "CREATE TABLE template (id INTEGER   PRIMARY KEY autoincrement NOT NULL,mobile   TEXT   NOT NULL,fingerindex  INT  NOT NULL,template_10  TEXT  NOT NULL,push_time TEXT  NOT NULL,sign TEXT  NOT NULL);";
 	sql = temp.c_str();
 	rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
 }
 int database::AddFingerprint(string mobile, string fingerindex, string template_10) {
 	const char *sql;
 	string tmp;
-	tmp = "insert into template(mobile, fingerindex,template_10) values('" + mobile + "'," + fingerindex + ",'" + template_10 + "');";
+
+	//得到当前时间
+	SYSTEMTIME sys;
+	GetLocalTime(&sys);
+	char push_time[128] = { 0 };
+	sprintf(push_time, "%4d-%02d-%02d %02d:%02d:%02d", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
+	//md5
+	MD5 sign;
+	sign.update("zsh_" + mobile + push_time);
+	//MD5(tmp1).toString();
+	//TRACE("tmp1=%s,md5:%s\n", tmp1, md5.toString());
+
+	tmp = "insert into template(mobile, fingerindex,template_10,push_time,sign) values('" + mobile + "'," + fingerindex + ",'" + template_10 + "','" + push_time + "','" + sign.toString() + "');";
 	sql = tmp.c_str();
 
 	/*rc = sqlite3_exec(db, "BEGIN;", 0, 0, &zErrMsg);
@@ -90,6 +105,10 @@ int database::AddFingerprint(string mobile, string fingerindex, string template_
 	rc = sqlite3_exec(db, "COMMIT;", 0, 0, &zErrMsg);*/
 	
 	rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
+	if (rc != SQLITE_OK) {
+		sqlite3_free(zErrMsg);
+		return 0;
+	}
 
 	//rc=sqlite3_exec(db, "SELECT * FROM template WHERE id=last_insert_rowid();", callback, NULL, &zErrMsg);
 	int id = 0;
@@ -167,7 +186,7 @@ FingerTpl* database::GetUserInfo(long autoid){
 	//ss << "select b.name, b.id, b.status_book, b.annotation, a.name, a.id, p.id, p.name, p.address, b.rating from books as b join authors as a on b.author_id = a.id join publishers as p on p.id = b.publisher_id where b.id = " << id << ";";
 
 	char tmp[128] = { 0 };
-	sprintf(tmp, "select id,mobile,fingerindex,template_10 from template where id=%d", autoid);
+	sprintf(tmp, "select id,mobile,fingerindex,template_10,push_time,sign from template where id=%d", autoid);
 	sql = tmp;
 	rc = sqlite3_exec(db, sql, ProcessOneTpl, tpl, &zErrMsg);
 	if (rc != SQLITE_OK) {

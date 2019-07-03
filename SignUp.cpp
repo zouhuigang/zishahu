@@ -177,7 +177,7 @@ void CSignUp::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 	long fi;
 	long Score, ProcessNum;
 	BOOL RegChanged;
-	char buffer[80];
+	char buffer[500];
 	CString sTemp;
 	BSTR bTemp;
 
@@ -204,8 +204,11 @@ void CSignUp::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 			MessageBox(TEXT("验证失败"));
 		else{
 			FingerTpl *user = ldb.GetUserInfo(fi);
-			sprintf(buffer, "验证成功,手机号为 = %s 分数 = %d  进程号 = %d", user->GetMobile(), Score, ProcessNum);
+			sprintf(buffer, "验证成功,手机号 = %s 分数 = %d  进程号 = %d,注册 = %s", user->GetMobile(), Score, ProcessNum, user->GetPushTime());
 			m_msg = buffer;
+			//delete user
+			delete user;
+			user = NULL;
 			UpdateData(FALSE);
 		}
 	}

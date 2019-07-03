@@ -69,6 +69,12 @@
     <ClInclude Include="table\FingerTpl.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="utils\md5.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SignIn.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -114,6 +120,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="table\FingerTpl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\md5.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SignIn.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
