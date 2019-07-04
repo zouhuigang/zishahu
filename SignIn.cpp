@@ -5,10 +5,9 @@
 #include "zshu.h"
 #include "SignIn.h"
 #include "afxdialogex.h"
-#include "curl/curl.h"
+#include "utils/HttpClient.h"
 #include "json/json.h"
 #include <stdio.h>
-#pragma comment(lib,"libcurl_a_debug.lib") 
 // CSignIn 对话框
 
 IMPLEMENT_DYNAMIC(CSignIn, CDialogEx)
@@ -37,38 +36,29 @@ BEGIN_MESSAGE_MAP(CSignIn, CDialogEx)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
+//String->CString
+CString toCString(string name){
+	//解决中文转码问题
+	int len = strlen(name.c_str()) + 1;
+	char outch[MAX_PATH];
+	WCHAR * wChar = new WCHAR[len];
+	wChar[0] = 0;
+	MultiByteToWideChar(CP_UTF8, 0, name.c_str(), len, wChar, len);
+	WideCharToMultiByte(CP_ACP, 0, wChar, len, outch, len, 0, 0);
+	delete[] wChar;
+	char* pchar = (char*)outch;
 
-bool getUrl(char *filename)
-{
-	CURL *curl;
-	CURLcode res;
-	FILE *fp;
-	if ((fp = fopen(filename, "w")) == NULL)  // 返回结果用文件存储
-		return false;
-	struct curl_slist *headers = NULL;
-	headers = curl_slist_append(headers, "Accept: Agent-007");
-	curl = curl_easy_init();    // 初始化
-	if (curl)
-	{
-		//curl_easy_setopt(curl, CURLOPT_PROXY, "10.99.60.201:8080");// 代理
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);// 改协议头
-		curl_easy_setopt(curl, CURLOPT_URL, "http://www.baidu.com");
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp); //将返回的http头输出到fp指向的文件
-		curl_easy_setopt(curl, CURLOPT_HEADERDATA, fp); //将返回的html主体数据输出到fp指向的文件
-		res = curl_easy_perform(curl);   // 执行
-		if (res != 0) {
-
-			curl_slist_free_all(headers);
-			curl_easy_cleanup(curl);
-		}
-		fclose(fp);
-		return true;
-	}
+	len = strlen(pchar) + 1;
+	WCHAR outName[MAX_PATH];
+	MultiByteToWideChar(CP_ACP, 0, pchar, len, outName, len);
+	return outName;
 }
+
+
 // CSignIn 消息处理程序
 void CSignIn::OnBnClickedButton1()
 {
-	UpdateData(TRUE);
+	
 	/*CString strValue = _T("{\"key1\":\"value1\"}");
 	Json::Reader reader;
 	Json::Value value;
@@ -84,14 +74,54 @@ void CSignIn::OnBnClickedButton1()
 		MessageBox(temp);
 	}*/
 
-	getUrl("/tmp/get.html");
 	// click sign in
+	UpdateData(TRUE);
 	if (m_mobile.IsEmpty() || m_sign.IsEmpty() || m_push_time.IsEmpty()){
 		MessageBox(TEXT("指纹信息不能为空"));
 		return;
 	}
 
+	//CString->string
+	std::string mobile(CW2A(m_mobile.GetString()));
+	std::string sign(CW2A(m_sign.GetString()));
+	std::string push_time(CW2A(m_push_time.GetString()));
 
+	//发送网络请求
+	string strCallback="";
+	HttpClient http;
+	string jsonParm = "";
+	jsonParm = "{";
+	jsonParm += "\"mobile\" : \"" + mobile + "\",";
+	jsonParm += "\"sign\" : \"" + sign + "\",";
+	jsonParm += "\"push_time\" :\" " + push_time+"\"";
+	jsonParm += "}";
+
+	if (http.Post("http://c3.ab.51tywy.com/api/v1.0/zsh/user/signin", jsonParm, NULL, strCallback) == CURLE_OK){
+		Json::Reader reader;
+		Json::Value value;
+
+		//CString temp;
+		if (reader.parse(strCallback.c_str(), value))
+		{
+			//temp = value["info"].asCString();
+			string info = value["info"].asString();
+			CString outName = toCString(info);
+			//statusCode
+			int statusCode = value["status"].asInt();
+			if (statusCode==501){
+				MessageBox(outName);
+			}
+			else{
+				MessageBox(TEXT("请求成功"));
+			}
+
+		}
+
+	}
+	else{
+		MessageBox(TEXT("网络请求失败，请检查网络连接.."));
+		return;
+	}
 
 
 

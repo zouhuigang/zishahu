@@ -49,7 +49,7 @@ public:
 	database();
 	~database();
 	void new_table();
-	int AddFingerprint(string mobile, string fingerindex, string template_10);
+	int AddFingerprint(string mobile, string fingerindex, string template_10, string push_time, string sign);
 	Tpl*  LoadFingerprintList();//加载本地所有的指纹进入缓存
 	int FingerCount;//指纹的个数
 	static int ProcessInt(void* notUsed, int colCount, char** colData, char** colNames);

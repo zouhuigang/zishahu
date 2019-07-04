@@ -228,6 +228,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="table\FingerTpl.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="utils\HttpClient.h" />
     <ClInclude Include="utils\md5.h" />
     <ClInclude Include="zkfinger\zkfpengx.h" />
     <ClInclude Include="zshu.h" />
@@ -252,6 +253,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="table\FingerTpl.cpp" />
+    <ClCompile Include="utils\HttpClient.cpp" />
     <ClCompile Include="utils\md5.cpp" />
     <ClCompile Include="zkfinger\zkfpengx.cpp" />
     <ClCompile Include="zshu.cpp" />

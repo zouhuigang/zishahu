@@ -104,8 +104,8 @@ BOOL CzshuDlg::OnInitDialog()
 	// TODO:  �ڴ����Ӷ���ĳ�ʼ������?
 
 	//create table
-	//database a;
-	//a.new_table();
+	database a;
+	a.new_table();
 
 
 	return TRUE;  // ���ǽ��������õ��ؼ������򷵻� TRUE

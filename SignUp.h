@@ -41,6 +41,10 @@ private:
 	CZKFPEngX m_zkfp;
 	CStatic m_startSignUp;
 	CStatic m_unSignUp;
+	CString toCString(string name);
+	void GetIdentCodeTimeLimit();//验证码
+	int m_nGetIdentCodeTime;
+	string CString2string(CString csStrData);
 public:
 	afx_msg void ConnectionFingerprint();//连接指纹仪
 	afx_msg void RegisteredFingerprint();//注册指纹
@@ -65,4 +69,9 @@ public:
 	afx_msg void OnBnClickedUnsignup();
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedGetcode();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+private:
+	CString m_code;
+	CString m_memo;
+	CString m_realname;
 };

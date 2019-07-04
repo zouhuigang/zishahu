@@ -126,6 +126,7 @@ public:
 	//static AutoLock m_CookieLock;
 	static void   SaveCookieList(CURL* pCurl);
 	static vector<string> m_vszCookies;   // Cookies信息
+	std::string string_To_UTF8(const std::string & str);//解决中文乱码的问题
 
 private:
 	CURL* m_pCurl;                      // Curl对象指针

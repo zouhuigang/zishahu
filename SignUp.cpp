@@ -6,8 +6,14 @@
 #include "SignUp.h"
 #include "afxdialogex.h"
 #include <string>
+#include "utils/HttpClient.h"
+#include "json/json.h"
 using namespace std;
 
+/*
+1. 是否有重复声明的地方？
+2. 在头文件里加上#pragma once试试。
+*/
 // CSignUp 对话框
 IMPLEMENT_DYNAMIC(CSignUp, CDialogEx)
 
@@ -15,6 +21,9 @@ CSignUp::CSignUp(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSignUp::IDD, pParent)
 	, m_mobile(_T(""))
 	, m_msg(_T(""))
+	, m_code(_T(""))
+	, m_memo(_T(""))
+	, m_realname(_T(""))
 {
 	m_startRegistered = TRUE;//进入页面就可以登记指纹啦。
 }
@@ -36,6 +45,9 @@ void CSignUp::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_START_SIGNUP, m_startSignUp);
 	DDX_Control(pDX, IDC_UNSIGNUP, m_unSignUp);
 
+	DDX_Text(pDX, IDC_EDIT3, m_code);
+	DDX_Text(pDX, IDC_EDIT4, m_memo);
+	DDX_Text(pDX, IDC_EDIT1, m_realname);
 }
 
 
@@ -46,6 +58,7 @@ BEGIN_MESSAGE_MAP(CSignUp, CDialogEx)
 	ON_BN_CLICKED(IDC_UNSIGNUP, &CSignUp::OnBnClickedUnsignup)
 	ON_BN_CLICKED(IDC_BUTTON1, &CSignUp::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_GETCODE, &CSignUp::OnBnClickedGetcode)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -114,22 +127,65 @@ void CSignUp::RegisteredFingerprint(){
 	UpdateData(TRUE);//同步控件数据
 	CString str;
 	
-	if (m_mobile.Compare(TEXT("")) == 0){
-		str.Format(_T("请先填写手机号，再录入指纹!"));
+	if (m_mobile.Compare(TEXT("")) == 0 || m_code.Compare(TEXT("")) == 0){
+		MessageBox(_T("手机号和验证码不能为空!!!"));
+		return;
 	}else{
-		//开始登记指纹，登记结束后发生 OnEnroll 事件
-		m_zkfp.BeginEnroll();
-		str.Format(_T("开始录入指纹!"));
-		//因为已经开始登记指纹了，所以不需要再开始登记注册了
-		m_startRegistered = FALSE;
-		//设置按钮不能点击
-		m_startSignUp.EnableWindow(0);
-		m_unSignUp.EnableWindow(1);
+		//核对手机号和验证码
+
+		//请求网络
+		std::string mobile(CW2A(m_mobile.GetString()));
+		std::string ver_code(CW2A(m_code.GetString()));
+		string strCallback = "";
+		HttpClient http;
+		string jsonParm = "";
+		jsonParm = "{";
+		jsonParm += "\"mobile\" : \"" + mobile + "\",";
+		jsonParm += "\"ver_code\" : \"" + ver_code + "\"";
+		jsonParm += "}";
+
+		if (http.Post("http://c3.ab.51tywy.com/api/v1.0/zsh/fingerprint/ver", jsonParm, NULL, strCallback) == CURLE_OK){
+			Json::Reader reader;
+			Json::Value value;
+
+			//CString temp;
+			if (reader.parse(strCallback.c_str(), value))
+			{
+				//temp = value["info"].asCString();
+				string info = value["info"].asString();
+				CString outName = toCString(info);
+				//statusCode
+				int statusCode = value["status"].asInt();
+				if (statusCode == 501){
+					MessageBox(outName);
+				}
+				else{
+					//可以录制指纹
+					//开始登记指纹，登记结束后发生 OnEnroll 事件
+					m_zkfp.BeginEnroll();
+					str.Format(_T("开始录入指纹!"));
+					//因为已经开始登记指纹了，所以不需要再开始登记注册了
+					m_startRegistered = FALSE;
+					//设置按钮不能点击
+					m_startSignUp.EnableWindow(0);
+					m_unSignUp.EnableWindow(1);
+
+					m_msg = str;
+					UpdateData(FALSE);
+				}
+
+			}
+
+		}
+		else{
+			MessageBox(TEXT("网络请求失败，请检查网络连接.."));
+			return;
+		}
+
+
+		
 	}
 	
-	m_msg = str;
-
-	UpdateData(FALSE);
 	return;
 	//CancelEnroll() 取消当前的指纹登记状态，即由 BeginEnroll 开始的操作可由此函数中断。 
 	//SetDlgItemText(IDC_EDHint, "start register");
@@ -225,9 +281,9 @@ void CSignUp::OnOnenrollZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 	VARIANT pTemplate;
 
 	if (!ActionResult)
-		MessageBox(TEXT("指纹登记失败"));
+		MessageBox(TEXT("指纹登记失败,请重试!!!"));
 	else{
-		MessageBox(TEXT("指纹登记成功"));
+		//MessageBox(TEXT("指纹登记成功"));
 
 		VariantClear(&FRegTemplate);
 		pTemplate = m_zkfp.GetTemplate();
@@ -238,16 +294,63 @@ void CSignUp::OnOnenrollZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 
 		VariantCopy(&FRegTemplate, &pTemplate);
 
-		m_zkfp.SaveTemplate(_T("c:\\fingerprint.tpl"), ATemplate); 
+		//m_zkfp.SaveTemplate(_T("c:\\fingerprint.tpl"), ATemplate); 
 
-		//插入数据库
-		//database a;
+		//调用接口存储指纹
+
+		//请求网络
+		std::string ver_code(CW2A(m_code.GetString()));
 		std::string strStr(CW2A(m_mobile.GetString()));       //CString 转string
 		std::string strStr1(CW2A(sRegTemplate.GetString()));       //CString 转string
-		int autoid = ldb.AddFingerprint(strStr, "1", strStr1);
-		if (autoid>0){
-			m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, autoid, (LPCTSTR)sRegTemplate);
+
+		string strCallback = "";
+		HttpClient http;
+		string jsonParm = "";
+		jsonParm = "{";
+		jsonParm += "\"mobile\" : \"" + strStr + "\",";
+		jsonParm += "\"ver_code\" : \"" + ver_code + "\",";
+		jsonParm += "\"template_10\" : \"" + strStr1 + "\"";
+		jsonParm += "}";
+
+
+		if (http.Post("http://c3.ab.51tywy.com/api/v1.0/zsh/fingerprint/add", jsonParm, NULL, strCallback) == CURLE_OK){
+			Json::Reader reader;
+			Json::Value value;
+
+			//CString temp;
+			if (reader.parse(strCallback.c_str(), value))
+			{
+				//temp = value["info"].asCString();
+				string info = value["info"].asString();
+				CString outName = toCString(info);
+				//statusCode
+				int statusCode = value["status"].asInt();
+				if (statusCode == 501){
+					MessageBox(outName);
+				}
+				else{
+
+					string push_time = value["data"]["push_time"].asString();
+					string sign = value["data"]["sign"].asString();
+					//插入本地数据库
+					//database a;
+					int autoid = ldb.AddFingerprint(strStr, "1", strStr1, push_time,sign);
+					if (autoid>0){
+						m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, autoid, (LPCTSTR)sRegTemplate);
+					}
+					MessageBox(TEXT("指纹录入成功"));
+				}
+
+			}
+
 		}
+		else{
+			MessageBox(TEXT("网络请求失败，请检查网络连接.."));
+			return;
+		}
+
+
+		
 		//TRACE("=====================================autoid=%d\n", autoid);
 		
 
@@ -319,6 +422,7 @@ void CSignUp::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	m_zkfp.EndEngine();
+	KillTimer(1);//关闭定时器1
 	CDialogEx::OnClose();
 }
 
@@ -348,12 +452,91 @@ void CSignUp::OnBnClickedUnsignup()
 }
 
 
+
 void CSignUp::OnBnClickedButton1()
 {
 	// 请求网络
-	MessageBox(TEXT("注册信息"));
+	UpdateData(TRUE);
+	if (m_realname.IsEmpty()){
+		MessageBox(TEXT("真实姓名不能为空"));
+		return;
+	}
+	if (m_mobile.IsEmpty()){
+		MessageBox(TEXT("手机号不能为空"));
+		return;
+	}
+
+	if (m_code.IsEmpty()){
+		MessageBox(TEXT("验证码不能为空"));
+		return;
+	}
+
+	
+	USES_CONVERSION;
+	std::string ver_code(CW2A(m_code.GetString()));
+	std::string mobile(CW2A(m_mobile.GetString()));       //CString 转string
+	std::string memo(CW2A(m_memo.GetString()));       //CString 转string
+	std::string realname(CW2A(m_realname.GetString()));       //CString 转string
+	
+	
+
+	string strCallback = "";
+	HttpClient http;
+	string jsonParm = "";
+	jsonParm = "{";
+	jsonParm += "\"mobile\" : \"" + mobile + "\",";
+	jsonParm += "\"ver_code\" : \"" + ver_code + "\",";
+	//jsonParm += "\"realname\" : \"aasd中文\",";
+	jsonParm += "\"realname\" : \"" + realname + "\",";
+	jsonParm += "\"memo\" : \"" + memo + "\"";
+	jsonParm += "}";
+
+
+	if (http.Post("http://c3.ab.51tywy.com/api/v1.0/zsh/user/signup", jsonParm, NULL, strCallback) == CURLE_OK){
+		Json::Reader reader;
+		Json::Value value;
+
+		//CString temp;
+		if (reader.parse(strCallback.c_str(), value))
+		{
+			//temp = value["info"].asCString();
+			string info = value["info"].asString();
+			CString outName = toCString(info);
+			//statusCode
+			int statusCode = value["status"].asInt();
+			if (statusCode == 501){
+				MessageBox(outName);
+			}
+			else{
+				MessageBox(TEXT("注册成功"));
+			}
+
+		}
+
+	}
+	else{
+		MessageBox(TEXT("网络请求失败，请检查网络连接.."));
+		return;
+	}
 }
 
+//String->CString
+CString CSignUp::toCString(string name){
+	//解决中文转码问题
+	int len = strlen(name.c_str()) + 1;
+	char outch[MAX_PATH];
+	WCHAR * wChar = new WCHAR[len];
+	wChar[0] = 0;
+	MultiByteToWideChar(CP_UTF8, 0, name.c_str(), len, wChar, len);
+	WideCharToMultiByte(CP_ACP, 0, wChar, len, outch, len, 0, 0);
+	delete[] wChar;
+	char* pchar = (char*)outch;
+
+	len = strlen(pchar) + 1;
+	WCHAR outName[MAX_PATH];
+	MultiByteToWideChar(CP_ACP, 0, pchar, len, outName, len);
+	return outName;
+}
 
 void CSignUp::OnBnClickedGetcode()
 {
@@ -364,7 +547,7 @@ void CSignUp::OnBnClickedGetcode()
 	//初始化指纹
 	//将本地数据库中的指纹读取进高速缓存中
 	//database a;
-	tplList = ldb.LoadFingerprintList();
+	/*tplList = ldb.LoadFingerprintList();
 	CString strTemp;
 	for (int i = 0; i < ldb.FingerCount; i++) {
 		//TRACE("=====================================new mobile = %s,id=%d\n", tplList[i].mobile, tplList[i].id);
@@ -377,5 +560,98 @@ void CSignUp::OnBnClickedGetcode()
 
 	free(tplList);
 
-	MessageBox(TEXT("初始化数据库"));
+	MessageBox(TEXT("初始化数据库")); */
+
+	//获取最新数据
+	UpdateData(TRUE);
+	if (m_mobile.IsEmpty()){
+		MessageBox(TEXT("手机号不能为空"));
+		return;
+	}
+
+	//请求网络
+	std::string mobile(CW2A(m_mobile.GetString()));
+
+	if (mobile.length() != 11)
+	{
+		MessageBox(TEXT("请输入正确的手机号码!"));
+		return;
+	}
+
+
+	//发送网络请求
+	string strCallback = "";
+	HttpClient http;
+	string jsonParm = "";
+	jsonParm = "{";
+	jsonParm += "\"mobile\" : \"" + mobile + "\"";
+	jsonParm += "}";
+
+	if (http.Post("http://c3.ab.51tywy.com/api/v1.0/zsh/user/sms/send", jsonParm, NULL, strCallback) == CURLE_OK){
+		Json::Reader reader;
+		Json::Value value;
+
+		//CString temp;
+		if (reader.parse(strCallback.c_str(), value))
+		{
+			//temp = value["info"].asCString();
+			string info = value["info"].asString();
+			CString outName = toCString(info);
+			//statusCode
+			int statusCode = value["status"].asInt();
+			if (statusCode == 501){
+				MessageBox(outName);
+			}
+			else{
+				//开启倒计时
+				GetIdentCodeTimeLimit();
+				MessageBox(TEXT("短信发送成功,请注意查收!"));
+			}
+
+		}
+
+	}
+	else{
+		MessageBox(TEXT("网络请求失败，请检查网络连接.."));
+		return;
+	}
+
+}
+
+//验证码倒计时
+void CSignUp::GetIdentCodeTimeLimit()
+{
+	GetDlgItem(IDC_GETCODE)->EnableWindow(0);
+	m_nGetIdentCodeTime = 60;
+	SetTimer(1, 1000, NULL);      //参数：定时器标号，定时时间（ms）。启动定时器1，每隔1s刷新一次
+}
+
+
+//消息里面添加定时消息
+void CSignUp::OnTimer(UINT_PTR nIDEvent)
+{
+	CString str;
+	switch (nIDEvent)
+	{
+	case 1:   //定时器1处理函数，定时发送数据进行更新
+	{
+				  if (m_nGetIdentCodeTime == 0)
+				  {
+					  GetDlgItem(IDC_GETCODE)->EnableWindow(1);
+					  GetDlgItem(IDC_GETCODE)->SetWindowText(_T("获取验证码"));
+					  KillTimer(1);//关闭定时器1
+				  }
+				  else
+				  {
+					  m_nGetIdentCodeTime--;
+					  str.Format(_T("%d"), m_nGetIdentCodeTime);
+					  GetDlgItem(IDC_GETCODE)->SetWindowText(str);
+				  }
+				  break;
+	}
+	default:
+		break;
+	}
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	CDialogEx::OnTimer(nIDEvent);
 }

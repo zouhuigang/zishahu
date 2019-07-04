@@ -51,6 +51,26 @@ HttpClient::~HttpClient(void)
 	curl_global_cleanup();
 }
 
+
+//解决中文乱码问题
+std::string HttpClient::string_To_UTF8(const std::string & str)
+{
+	int nwLen = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
+	wchar_t * pwBuf = new wchar_t[nwLen + 1];//一定要加1，不然会出现尾巴 
+	ZeroMemory(pwBuf, nwLen * 2 + 2);
+	::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), pwBuf, nwLen);
+	int nLen = ::WideCharToMultiByte(CP_UTF8, 0, pwBuf, -1, NULL, NULL, NULL, NULL);
+	char * pBuf = new char[nLen + 1];
+	ZeroMemory(pBuf, nLen + 1);
+	::WideCharToMultiByte(CP_UTF8, 0, pwBuf, nwLen, pBuf, nLen, NULL, NULL);
+	std::string retStr(pBuf);
+	delete[]pwBuf;
+	delete[]pBuf;
+	pwBuf = NULL;
+	pBuf = NULL;
+	return retStr;
+}
+
 int HttpClient::Post(const string& strUrl, const string& strPost, curl_write_callback pfnWriteFunc, string& strResponse)
 {
 	// 如果没有初始化,则首先初始化CURL
@@ -82,8 +102,17 @@ int HttpClient::Post(const string& strUrl, const string& strPost, curl_write_cal
 			curl_easy_setopt(m_pCurl, CURLOPT_COOKIELIST, m_vszCookies[0].c_str());
 		}
 	}
+
+	// 设置http发送的内容类型为JSON
+	curl_slist *plist = curl_slist_append(NULL,
+		"Content-Type:application/json;charset=UTF-8");
+	curl_easy_setopt(m_pCurl, CURLOPT_HTTPHEADER, plist);
+
 	curl_easy_setopt(m_pCurl, CURLOPT_POST, 1);                             // 设置POST方式
-	curl_easy_setopt(m_pCurl, CURLOPT_POSTFIELDS, strPost.c_str());         // 设置POST数据
+	//curl_easy_setopt(m_pCurl, CURLOPT_POSTFIELDS, strPost.c_str());         // 设置POST数据
+	string mJsonData = string_To_UTF8((string)strPost);
+	curl_easy_setopt(m_pCurl, CURLOPT_POSTFIELDS, mJsonData.c_str());
+
 	curl_easy_setopt(m_pCurl, CURLOPT_READFUNCTION, NULL);                  // 不需要读回调
 	curl_easy_setopt(m_pCurl, CURLOPT_WRITEFUNCTION, pfnWriteFunc);         // 设置写回调
 	curl_easy_setopt(m_pCurl, CURLOPT_WRITEDATA, (void*)&strResponse);      // 接收响应数据的参数

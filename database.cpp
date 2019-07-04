@@ -82,22 +82,23 @@ void database::new_table() {
 	sql = temp.c_str();
 	rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
 }
-int database::AddFingerprint(string mobile, string fingerindex, string template_10) {
+int database::AddFingerprint(string mobile, string fingerindex, string template_10, string push_time, string sign) {
 	const char *sql;
 	string tmp;
 
 	//得到当前时间
-	SYSTEMTIME sys;
-	GetLocalTime(&sys);
-	char push_time[128] = { 0 };
-	sprintf(push_time, "%4d-%02d-%02d %02d:%02d:%02d", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
+	//SYSTEMTIME sys;
+	//GetLocalTime(&sys);
+	//char push_time[128] = { 0 };
+	//sprintf(push_time, "%4d-%02d-%02d %02d:%02d:%02d", sys.wYear, sys.wMonth, sys.wDay, sys.wHour, sys.wMinute, sys.wSecond);
 	//md5
-	MD5 sign;
-	sign.update("zsh_" + mobile + push_time);
+	//MD5 sign;
+	//sign.update("zsh_" + mobile + push_time);
 	//MD5(tmp1).toString();
+	//sign.toString()
 	//TRACE("tmp1=%s,md5:%s\n", tmp1, md5.toString());
 
-	tmp = "insert into template(mobile, fingerindex,template_10,push_time,sign) values('" + mobile + "'," + fingerindex + ",'" + template_10 + "','" + push_time + "','" + sign.toString() + "');";
+	tmp = "insert into template(mobile, fingerindex,template_10,push_time,sign) values('" + mobile + "'," + fingerindex + ",'" + template_10 + "','" + push_time + "','" + sign + "');";
 	sql = tmp.c_str();
 
 	/*rc = sqlite3_exec(db, "BEGIN;", 0, 0, &zErrMsg);
