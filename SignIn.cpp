@@ -7,6 +7,7 @@
 #include "afxdialogex.h"
 #include "utils/HttpClient.h"
 #include "json/json.h"
+#include "ScanDlg.h"
 #include <stdio.h>
 // CSignIn 对话框
 
@@ -16,18 +17,15 @@ CSignIn::CSignIn(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSignIn::IDD, pParent)
 	, m_mobile(_T(""))
 {
-
+	//_CrtSetBreakAlloc(541);
 }
 
-CSignIn::~CSignIn()
-{
-}
 
 void CSignIn::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT1, m_mobile);
-	DDX_Control(pDX, IDC_ZKFPENGX1, m_zkfp);
+	DDX_Control(pDX, IDC_ZKFPENGX1, m_zkfp_1);
 }
 
 
@@ -37,7 +35,7 @@ BEGIN_MESSAGE_MAP(CSignIn, CDialogEx)
 END_MESSAGE_MAP()
 
 //String->CString
-CString toCString(string name){
+CString CSignIn::toCString(string name){
 	//解决中文转码问题
 	int len = strlen(name.c_str()) + 1;
 	char outch[MAX_PATH];
@@ -51,6 +49,10 @@ CString toCString(string name){
 	len = strlen(pchar) + 1;
 	WCHAR outName[MAX_PATH];
 	MultiByteToWideChar(CP_ACP, 0, pchar, len, outName, len);
+
+	//释放内存
+	free(pchar);
+	pchar = NULL;
 	return outName;
 }
 
@@ -73,6 +75,11 @@ void CSignIn::OnBnClickedButton1()
 		temp = value["key1"].asCString();
 		MessageBox(temp);
 	}*/
+
+	CScanDlg dlg;
+	dlg.DoModal();
+	EndDialog(0);
+	return;
 
 	// click sign in
 	UpdateData(TRUE);
@@ -112,7 +119,13 @@ void CSignIn::OnBnClickedButton1()
 				MessageBox(outName);
 			}
 			else{
+
+				//ShowWindow(SW_HIDE);
+				//CScanDlg dlg;
+				//dlg.DoModal();
+				//EndDialog(0);
 				MessageBox(TEXT("请求成功"));
+
 			}
 
 		}
@@ -132,23 +145,38 @@ BOOL CSignIn::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// TODO:  在此添加额外的初始化
-
-	fpcHandle = m_zkfp.CreateFPCacheDB();
-	VariantInit(&FRegTemplate);
-
-	tplList = ldb.LoadFingerprintList();
-	CString strTemp;
-	for (int i = 0; i < ldb.FingerCount; i++) {
-		strTemp = tplList[i].template_10;
-		m_zkfp.AddRegTemplateStrToFPCacheDB(fpcHandle, tplList[i].id, (LPCTSTR)strTemp);
-		TRACE("=====================================new mobile = %s,id=%d\n", tplList[i].mobile, tplList[i].id);
-	}
-	free(tplList);
+	
+	
 
 	//自动连接指纹仪
-	ConnectionFingerprint();
+	TRACE("==================================conZKFP = %d\n", conZKFP);
+	if (conZKFP!=0){
+		long new_conZKFP = m_zkfp_1.InitEngine();
+		TRACE("=====================================指纹初始化返回值:%d,访问地址:%p\n", new_conZKFP, &m_zkfp_1);
+		if (new_conZKFP == 0){
 
+			conZKFP = 0;
+			//create db cache
+			fpcHandle = m_zkfp_1.CreateFPCacheDB();
+			VariantInit(&FRegTemplate);
+
+			//数据库写入
+			tplList = ldb.LoadFingerprintList();
+			CString strTemp;
+			for (int i = 0; i < ldb.FingerCount; i++) {
+				strTemp = tplList[i].template_10;
+				m_zkfp_1.AddRegTemplateStrToFPCacheDB(fpcHandle, tplList[i].id, (LPCTSTR)strTemp);
+				//TRACE("=====================================new mobile = %s,id=%d\n", tplList[i].mobile, tplList[i].id);
+			}
+			free(tplList);
+			tplList = NULL;
+		}
+		else{
+			m_zkfp_1.EndEngine();
+			MessageBox(TEXT("请检查指纹仪是否插好!!"));
+		}
+	}
+	
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
@@ -158,18 +186,23 @@ BOOL CSignIn::OnInitDialog()
 //连接指纹仪
 void CSignIn::ConnectionFingerprint()
 {
-	char buffer[10];
 
-	if (m_zkfp.InitEngine() == 0){
+	/*if (m_zkfp.InitEngine() == 0){
 		m_SN = m_zkfp.GetSensorSN();
 		ltoa(m_zkfp.GetSensorIndex(), buffer, 10);
 		m_Used = buffer;
 		ltoa(m_zkfp.GetSensorCount(), buffer, 10);
-		m_COUNT = buffer;
+		m_COUNT = buffer
 	}
-	else
+	else{
+		m_zkfp.EndEngine();
 		MessageBox(TEXT("指纹仪初始化失败，请检查指纹仪是否插好..."));
-}BEGIN_EVENTSINK_MAP(CSignIn, CDialogEx)
+	}*/
+		
+}
+
+
+BEGIN_EVENTSINK_MAP(CSignIn, CDialogEx)
 ON_EVENT(CSignIn, IDC_ZKFPENGX1, 5, CSignIn::OnOnfeatureinfoZkfpengx1, VTS_I4)
 ON_EVENT(CSignIn, IDC_ZKFPENGX1, 8, CSignIn::OnOnimagereceivedZkfpengx1, VTS_PBOOL)
 ON_EVENT(CSignIn, IDC_ZKFPENGX1, 10, CSignIn::OnOncaptureZkfpengx1, VTS_BOOL VTS_VARIANT)
@@ -189,7 +222,7 @@ void CSignIn::OnOnimagereceivedZkfpengx1(BOOL* AImageValid)
 	hdc = this->GetDC()->m_hDC;
 
 	//MessageBox(TEXT("获取到了图像"));//m_zkfp.GetImageWidth() m_zkfp.GetImageHeight()
-	m_zkfp.PrintImageAt(long(hdc), 100, 136, 270, 160);
+	m_zkfp_1.PrintImageAt(long(hdc), 100, 136, 270, 160);
 }
 
 
@@ -198,14 +231,13 @@ void CSignIn::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 	// TODO:  在此处添加消息处理程序代码
 	long fi;
 	long Score, ProcessNum;
-	BOOL RegChanged;
 	CString sTemp;
 	Score = 8;
 
 	//获取到的指纹
-	sTemp = m_zkfp.GetTemplateAsString();
+	sTemp = m_zkfp_1.GetTemplateAsString();
 
-	fi = m_zkfp.IdentificationFromStrInFPCacheDB(fpcHandle, (LPCTSTR)sTemp, &Score, &ProcessNum);
+	fi = m_zkfp_1.IdentificationFromStrInFPCacheDB(fpcHandle, (LPCTSTR)sTemp, &Score, &ProcessNum);
 	if (fi == -1){
 		m_mobile = "";//清空变量
 		m_sign = "";
@@ -220,8 +252,6 @@ void CSignIn::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 		m_push_time = user->GetPushTime();
 		UpdateData(FALSE);
 
-		//delete user
-		//MessageBox(TEXT("验证成功"));
 		delete user;
 		user = NULL;
 	}
@@ -231,8 +261,8 @@ void CSignIn::OnOncaptureZkfpengx1(BOOL ActionResult, const VARIANT& ATemplate)
 void CSignIn::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	m_zkfp.EndEngine();//注销指纹
-	CDialog *pdlg = (CDialog *)AfxGetMainWnd();
-	pdlg->DestroyWindow();
+	//TRACE("=====================================1111,访问地址:%p\n", &m_zkfp_1);
+	m_zkfp_1.EndEngine();//注销指纹
+	//TRACE("=====================================2222,访问地址:%p\n", &m_zkfp_1);
 	CDialogEx::OnClose();
 }

@@ -25,6 +25,7 @@ CSignUp::CSignUp(CWnd* pParent /*=NULL*/)
 	, m_memo(_T(""))
 	, m_realname(_T(""))
 {
+
 	m_startRegistered = TRUE;//进入页面就可以登记指纹啦。
 }
 
@@ -79,6 +80,8 @@ BOOL CSignUp::OnInitDialog()
 	FingerCount = 0;
 	fpcHandle = m_zkfp.CreateFPCacheDB();
 	VariantInit(&FRegTemplate);
+	//自动连接指纹仪
+	ConnectionFingerprint();
 
 	tplList = ldb.LoadFingerprintList();
 	CString strTemp;
@@ -90,8 +93,7 @@ BOOL CSignUp::OnInitDialog()
 	}
 	free(tplList);
 
-	//自动连接指纹仪
-	ConnectionFingerprint();
+
 
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -117,8 +119,10 @@ void CSignUp::ConnectionFingerprint()
 			//SetDlgItemText(IDC_EDSN, m_SN);
 			//MessageBox(TEXT("Initial Succeed"));
 		}
-		else
+		else{
+			m_zkfp.EndEngine();
 			MessageBox(TEXT("指纹仪初始化失败，请检查指纹仪是否插好..."));
+		}
 		FMatchType = 0;
 }
 
@@ -421,9 +425,16 @@ void CSignUp::OnOnfingerleavingZkfpengx1()
 void CSignUp::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	m_zkfp.EndEngine();
+	
+	if (fpcHandle > 0)
+	{
+		//m_zkfp.EndEngine();
+		m_zkfp.FreeFPCacheDB(fpcHandle);
+	}
 	KillTimer(1);//关闭定时器1
+
 	CDialogEx::OnClose();
+	//exit(1);
 }
 
 
@@ -535,6 +546,11 @@ CString CSignUp::toCString(string name){
 	len = strlen(pchar) + 1;
 	WCHAR outName[MAX_PATH];
 	MultiByteToWideChar(CP_ACP, 0, pchar, len, outName, len);
+
+	//释放内存
+	free(pchar);
+	pchar = NULL;
+
 	return outName;
 }
 

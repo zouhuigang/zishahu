@@ -1,29 +1,18 @@
 
-// zshuDlg.h : ͷ�ļ�
-//
-
 #pragma once
 
-
-// CzshuDlg �Ի���
 class CzshuDlg : public CDialogEx
 {
-	// ����
 public:
-	CzshuDlg(CWnd* pParent = NULL);	// ��׼���캯��
-
-	// �Ի�������
+	CzshuDlg(CWnd* pParent = NULL);
+	
 	enum { IDD = IDD_ZSHU_DIALOG };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV ֧��
-
-
-	// ʵ��
+	virtual void DoDataExchange(CDataExchange* pDX);
 protected:
 	HICON m_hIcon;
 
-	// ���ɵ���Ϣӳ�亯��
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
@@ -32,4 +21,5 @@ protected:
 public:
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedButton2();
+	afx_msg void OnClose();
 };

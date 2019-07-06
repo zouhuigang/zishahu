@@ -508,7 +508,9 @@ void CZKFPEngX::CancelCapture()
 
 void CZKFPEngX::EndEngine()
 {
+	TRACE("=====================================333,访问地址:%p\n", 0x1b);
 	InvokeHelper(0x1b, DISPATCH_METHOD, VT_EMPTY, NULL, NULL);
+	TRACE("=====================================444,访问地址:%p\n", 0x1b);
 }
 
 VARIANT CZKFPEngX::DecodeTemplate1(LPCTSTR ASour)

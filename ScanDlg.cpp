@@ -50,8 +50,8 @@ END_MESSAGE_MAP()
 void CScanDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	CDialog *pdlg = (CDialog *)AfxGetMainWnd();
-	pdlg->DestroyWindow();
+	//CDialog *pdlg = (CDialog *)AfxGetMainWnd();
+	//pdlg->DestroyWindow();
 	CDialogEx::OnClose();
 }
 

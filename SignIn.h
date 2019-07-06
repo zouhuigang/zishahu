@@ -2,22 +2,17 @@
 #include "database.h"
 #pragma once
 
-
-// CSignIn 对话框
-
 class CSignIn : public CDialogEx
 {
 	DECLARE_DYNAMIC(CSignIn)
 
 public:
-	CSignIn(CWnd* pParent = NULL);   // 标准构造函数
-	virtual ~CSignIn();
+	CSignIn(CWnd* pParent = NULL);
 
-// 对话框数据
 	enum { IDD = IDD_SIGNIN_DIALOG };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);
 
 	DECLARE_MESSAGE_MAP()
 private:
@@ -31,12 +26,12 @@ private:
 	CString	m_Used;
 	CString	m_SN;
 	CString	m_COUNT;
-	afx_msg void ConnectionFingerprint();
+	void ConnectionFingerprint();
+	CString toCString(string name);
+	CZKFPEngX m_zkfp_1;
+	long conZKFP=2;
 public:
 	afx_msg void OnBnClickedButton1();
-private:
-	CZKFPEngX m_zkfp;
-public:
 	virtual BOOL OnInitDialog();
 	DECLARE_EVENTSINK_MAP()
 	void OnOnfeatureinfoZkfpengx1(long AQuality);

@@ -9,7 +9,7 @@ database::database()
 {
 	//hcu
 	rc = sqlite3_open("zsh.db", &db);
-	//_CrtSetBreakAlloc(461); //¼ì²âÄÚ´æĞ¹Â©
+	//_CrtSetBreakAlloc(557); //¼ì²âÄÚ´æĞ¹Â©
 	
 }
 
@@ -23,6 +23,7 @@ LPCWSTR toMSG(char *szStr){
 
 database::~database()
 {
+	TRACE("database free \n");
 	if (rc != SQLITE_OK)
 	{
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
