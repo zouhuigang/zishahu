@@ -20,15 +20,18 @@ CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 	m_pMC = NULL;
 	m_pGB = NULL;
 	m_pCapture = NULL;
+	//_CrtSetBreakAlloc(646); //检测内存泄漏
+
 }
 
 CScanDlg::~CScanDlg()
 {
+	//free mem
+	CoUninitialize();
+	TRACE("==================================调用析构函数\n");
+	delete[] gcapList;
 }
 
-void CScanDlg::ErrMsg(TCHAR *pText){
-	::MessageBox(NULL, pText, TEXT("Error!"), MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
-}
 
 void CScanDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -52,10 +55,11 @@ void CScanDlg::OnClose()
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	//CDialog *pdlg = (CDialog *)AfxGetMainWnd();
 	//pdlg->DestroyWindow();
+	stopVideo();
 	CDialogEx::OnClose();
 }
 
-BOOL CScanDlg::MakeBuilder(_capstuff *cur_gcap)
+BOOL CScanDlg::MakeBuilder(Carame* cur_gcap)
 {
 	// we have one already
 	if (cur_gcap->pBuilder)
@@ -67,12 +71,13 @@ BOOL CScanDlg::MakeBuilder(_capstuff *cur_gcap)
 		return FALSE;
 	}
 
+	//TRACE("==================================MakeBuilder:%p\n", cur_gcap->pBuilder);
 	return TRUE;
 }
 
 // Make a graph object we can use for capture graph building
 //
-BOOL CScanDlg::MakeGraph(_capstuff *cur_gcap)
+BOOL CScanDlg::MakeGraph(Carame* cur_gcap)
 {
 	// we have one already
 	if (cur_gcap->pFg)
@@ -85,9 +90,27 @@ BOOL CScanDlg::MakeGraph(_capstuff *cur_gcap)
 		IID_ICaptureGraphBuilder2, (LPVOID*) & cur_gcap->pFg);
 	if (FAILED(hr))
 		return hr;*/
+	//TRACE("==================================MakeGraph:%p\n", cur_gcap->pFg);
 
 	return (hr == NOERROR) ? TRUE : FALSE;
 }
+
+//视频回调
+BOOL CScanDlg::MakeCallback(Carame* cur_gcap)
+{
+	
+	if (cur_gcap->g_sampleGrabberCB)
+		return TRUE;
+
+	cur_gcap->g_sampleGrabberCB = new SampleGrabberCallback();
+	if (NULL == cur_gcap->g_sampleGrabberCB)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 //查看视频设备
 //https://blog.csdn.net/laoyi_grace/article/details/6231429
@@ -97,8 +120,8 @@ void CScanDlg::GetAllCapDevices()
 {
 	UINT uIndex = 0;
 	//释放视频设备列表
-	for (int i = 0; i<NUMELMS(gcap.rgpmVideoMenu); i++){
-		IMonRelease(gcap.rgpmVideoMenu[i]);
+	for (int i = 0; i<NUMELMS(rgpmVideoMenu); i++){
+		IMonRelease(rgpmVideoMenu[i]);
 	}
 
 	//枚举所有的视频捕捉设备
@@ -131,14 +154,9 @@ void CScanDlg::GetAllCapDevices()
 			hr = pBag->Read(L"FriendlyName", &var, NULL);
 			if (hr == NOERROR)
 			{
-				CString strDeviceName = var.bstrVal;
-				//CString strMenuItem;
-				//strMenuItem.Format("%d)%s",(uIndex+1),strDeviceName);
-				//打印
-				//MessageBox(strDeviceName);
 				//将所有摄像头设备存储到rgpmVideoMenu里面
 				SysFreeString(var.bstrVal);
-				gcap.rgpmVideoMenu[uIndex] = pM;
+				rgpmVideoMenu[uIndex] = pM;
 				pM->AddRef();
 			}
 			pBag->Release();
@@ -167,9 +185,8 @@ void CScanDlg::IMonRelease(IMoniker *&pm)
 
 
 //将摄像头数据，输出到mfc的picture控件中,初始化摄像头DIV_ID为容器id==IDC_PREVIEW_AVI
-HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
+HRESULT CScanDlg::ToPreview(int DIV_ID, Carame* cur_gcap){
 	HRESULT hr = S_OK;//运行是否成功
-	HWND hwndPreview = NULL;//预览窗口
 	cur_gcap->pSampleGrabberFilter = NULL;
 	cur_gcap->m_pSampGrabber = NULL;
 
@@ -192,6 +209,7 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	if (FAILED(hr))
 		return hr;
 
+
 	//CLSID_FilterGraph改为CLSID_SampleGrabber
 	hr = cur_gcap->pSampleGrabberFilter->QueryInterface(IID_ISampleGrabber, (LPVOID*)&cur_gcap->m_pSampGrabber);
 	if (FAILED(hr)){
@@ -210,7 +228,7 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 		MessageBox(TEXT("Could not set media type"));
 		return hr;
 	}
-
+	
 	AM_MEDIA_TYPE mediaType;
 	ZeroMemory(&mediaType, sizeof(AM_MEDIA_TYPE));
 	//Find the current bit depth
@@ -233,22 +251,6 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	if (FAILED(hr))
 		return hr;
 
-	//加入DirectShow中自带的SampleGrabber Filter
-	/*hr = cur_gcap->pFg->AddFilter(pGrabberStill, L"Still Sample Grabber");
-	if (FAILED(hr))
-	{
-		printf("Couldn't add sample grabber to graph!  hr=0x%x\n", hr);
-		// Return an error.
-	}
-
-	//加入DirectShow中自带的NullRender Filter
-	hr = cur_gcap->pFg->AddFilter(pNull, L"NullRender");
-	if (FAILED(hr))
-	{
-		printf("Couldn't add null to graph!  hr=0x%x\n", hr);
-		return hr;
-	}*/
-
 
 
 	hr = cur_gcap->m_pSampGrabber->GetConnectedMediaType(&mediaType);
@@ -258,8 +260,8 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 	}
 	
 	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
-	cur_gcap->g_sampleGrabberCB.m_lWidth = vih->bmiHeader.biWidth;
-	cur_gcap->g_sampleGrabberCB.m_lHeight = vih->bmiHeader.biHeight;
+	cur_gcap->g_sampleGrabberCB->m_lWidth = vih->bmiHeader.biWidth;
+	cur_gcap->g_sampleGrabberCB->m_lHeight = vih->bmiHeader.biHeight;
 	
 
 	//只能设置SetOneShot为TRUE， 因为使用SetPositions 函数始终返回 E_NOTIMPL：Method is not supported.如果为false
@@ -268,67 +270,75 @@ HRESULT CScanDlg::ToPreview(int DIV_ID, _capstuff *cur_gcap){
 
 	hr = cur_gcap->m_pSampGrabber->SetBufferSamples(FALSE);
 	//设置回调
-	hr = cur_gcap->m_pSampGrabber->SetCallback(&cur_gcap->g_sampleGrabberCB, 1);
-
-
-	/*
-
-	注释掉，不能截图
-	IBaseFilter *pSampleGrabberFilter;
-	hr = m_pCaptureGB->RenderStream(&PIN_CATEGORY_PREVIEW,&MEDIATYPE_Video,
-	m_pDevFilter,pSampleGrabberFilter,NULL);
-	*/
-	//连接视频捕捉图像的Filters
-	/*hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Interleaved, cur_gcap->pVCap, NULL, NULL);
-	if (FAILED(hr))
-	{
-		hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, cur_gcap->pVCap, NULL, NULL);
-		if (FAILED(hr))
-		{
-			hr = cur_gcap->pBuilder->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, cur_gcap->pVCap, NULL, NULL);
-		}
-	}*/
+	hr = cur_gcap->m_pSampGrabber->SetCallback(cur_gcap->g_sampleGrabberCB, 1);
 
 	// find the video window and stuff it in our window
-	CComQIPtr< IVideoWindow, &IID_IVideoWindow > pWindow = cur_gcap->pFg;           //VideoWindow接口
-	if (!pWindow)
-	{
-		MessageBox(TEXT("Could not get video window interface"));
-		return E_FAIL;
-	}
-	// set up the preview window to be in our dialog instead of floating popup
+	
+	hr = cur_gcap->pFg->QueryInterface(IID_IVideoWindow, (LPVOID *)&cur_gcap->pVW);
 
-
-	GetDlgItem(DIV_ID, &hwndPreview);//获得预览窗口控件的Hwnd,只能显示一个摄像头
-	RECT rc;
-	::GetWindowRect(hwndPreview, &rc);
-
-	hr = pWindow->put_Owner((OAHWND)hwndPreview);
-	hr = pWindow->put_Left(0);
-	hr = pWindow->put_Top(0);
-	hr = pWindow->put_Width(rc.right - rc.left);
-	hr = pWindow->put_Height(rc.bottom - rc.top);
-	hr = pWindow->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS);
-	hr = pWindow->put_Visible(OATRUE);
-
-	// run the filter graph，IMediaControl接口提供了数据在Filer Graph中的流向
-	CComQIPtr< IMediaControl, &IID_IMediaControl > pControl = cur_gcap->pFg;
-	hr = pControl->Run();
-	if (FAILED(hr))
-	{
-		MessageBox(TEXT("Could not run ToPreview"));
+	if (FAILED(hr)){
+		MessageBox(TEXT("videoWindows fail"));
 		return hr;
 	}
+
+
+	ShowVideo(cur_gcap, DIV_ID);
+
 	return hr;
 }
 
 
+//输出到指定容器
+HRESULT CScanDlg::ShowVideo(Carame* cur_gcap,int DIV_ID){
+	HWND hwndPreview = NULL;//预览窗口
+	HRESULT hr = S_OK;//运行是否成功
+	// set up the preview window to be in our dialog instead of floating popup
+	GetDlgItem(DIV_ID, &hwndPreview);//获得预览窗口控件的Hwnd,只能显示一个摄像头
+	RECT rc;
+	::GetWindowRect(hwndPreview, &rc);
+	hr = cur_gcap->pVW->put_Owner((OAHWND)hwndPreview);
+	hr = cur_gcap->pVW->put_Left(0);
+	hr = cur_gcap->pVW->put_Top(0);
+	hr = cur_gcap->pVW->put_Width(rc.right - rc.left);
+	hr = cur_gcap->pVW->put_Height(rc.bottom - rc.top);
+	hr = cur_gcap->pVW->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS);
+	hr = cur_gcap->pVW->put_Visible(OATRUE);
+	//在应用程序退出前，停止图表并重置视频窗口为NULL。否则，窗口消息可能被错误的发送给错误的窗口，从而导致错误发生
+	// run the filter graph，IMediaControl接口提供了数据在Filer Graph中的流向
+	//OAFilterState pfs;
+	//hr = cur_gcap->m_pMC->GetState(100, &pfs);//测试Run之前
+	hr = cur_gcap->m_pMC->Run();
+
+	DWORD r = GetLastError();
+	TRACE("==================================错误 = %d,hr=%d\n", r, hr);
+	if (FAILED(hr))
+	{
+		MessageBox(TEXT("视频不能预览"));
+		return hr;
+	}
+	//创建线程
+	//AfxBeginThread((AFX_THREADPROC)WaitProc, this);
+	return hr;
+}
+
+
+// 线程调用函数
+UINT __cdecl CScanDlg::WaitProc(CScanDlg * pThis)
+{
+	long evCode;
+	//pThis->m_pEvent->WaitForCompletion(INFINITE, &evCode); // Wait until the graph stops
+	//AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_ANA_ACTIONFINISHED);
+	return 0;
+}
+
+
 //选择摄像头并初始化
-BOOL CScanDlg::selectDevice(_capstuff *cur_gcap, int index){
+BOOL CScanDlg::selectDevice(Carame* cur_gcap, int index){
 
 	//初始化参数
 	HRESULT hr = S_OK;
 	BOOL f;
+	BOOL fb;
 	WCHAR wszVideo[1024], wszAudio[1024];
 	IBindCtx *lpBC = 0;
 	IMoniker *pmVideo = 0, *pmAudio = 0;
@@ -339,6 +349,14 @@ BOOL CScanDlg::selectDevice(_capstuff *cur_gcap, int index){
 	if (!f)
 	{
 		MessageBox(TEXT("Cannot instantiate graph builder"));
+		return FALSE;
+	}
+
+	//构建回调
+	fb = MakeCallback(cur_gcap);
+	if (!fb)
+	{
+		MessageBox(TEXT("构建视频回调失败"));
 		return FALSE;
 	}
 
@@ -354,7 +372,7 @@ BOOL CScanDlg::selectDevice(_capstuff *cur_gcap, int index){
 	}
 
 	//选择的驱动
-	pmVideo = gcap.rgpmVideoMenu[index];//device
+	pmVideo = rgpmVideoMenu[index];//device
 	cur_gcap->pmVideo = pmVideo;
 	//gcap.pmAudio = pmAudio;
 
@@ -449,9 +467,14 @@ BOOL CScanDlg::selectDevice(_capstuff *cur_gcap, int index){
 	cur_gcap->fCapAudioIsRelevant = TRUE;
 
 	//注册媒体控制事件
-	hr = cur_gcap->pFg->QueryInterface(IID_IMediaEventEx, (LPVOID*)&cur_gcap->m_pMediaEvent);
+	/*hr = cur_gcap->pFg->QueryInterface(IID_IMediaEventEx, (LPVOID*)&cur_gcap->m_pMediaEvent);
 	if (FAILED(hr))
-		return hr;
+		return hr;*/
+
+	//状态转换
+	hr = cur_gcap->pFg->QueryInterface(IID_IMediaControl, (void **)&cur_gcap->m_pMC);
+	if (FAILED(hr))return hr;
+
 
 	return TRUE;
 
@@ -466,88 +489,94 @@ BOOL CScanDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 
+	//不支持com组件的就会失败!
+	HRESULT hr = CoInitialize(NULL);
+	if (FAILED(hr)){
+		MessageBox(TEXT("不支持COM组件的初始化，导致动画未被载入"));
+	}
+
+	//声明摄像头
+	gcapList = new Carame[2];//摄像头列表,存储2个摄像头
 	//列举摄像头驱动
 	GetAllCapDevices();
+	
 
-	for (int i = 0; i < carameCount; i++){
-		//声明摄像头结构体
-		//_capstuff gcap_1 = { sizeof(_capstuff) };
-		//_capstuff gcap_2 = { sizeof(_capstuff) };
-		//selectDevice(&gcap_1, 0);
-		//selectDevice(&gcap_2, 1);
+	selectDevice(&gcapList[0], 0);
+	ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
 
-
-		//将视频数据显示到mfc界面上，传入容器的id
-		//ToPreview(IDC_PREVIEW_AVI2, &gcap_1);
-		//ToPreview(IDC_PREVIEW_AVI, &gcap_2);
-
-		//动态创建摄像头容器
-		//pPictureControl->Create(_T(""), WS_CHILD | WS_VISIBLE | SS_BITMAP, CRect(20, 10, 80, 40), this, IDC_CARAME_INIT + i);
-
+	selectDevice(&gcapList[1], 1);
+	ToPreview(IDC_PREVIEW_AVI_2, &gcapList[1]);
+	/*for (int i = 0; i < carameCount; i++){
 		if (i>=2){
 			break;
 		}
 
-		//初始化摄像头
-		selectDevice(&gcapList[i], i);
+		TRACE("==================================获取到的摄像头数量为 = %d,i=%d\n", carameCount,i);
+
+		
 		//将摄像头显示到对应的mfc容器
 		if (i == 0){
-			ToPreview(IDC_PREVIEW_AVI_1, &gcapList[i]);
+			//初始化摄像头
+			//selectDevice(&gcapList[0], 0);
+			//ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
 		}
 		else if (i==1){
-			ToPreview(IDC_PREVIEW_AVI_2, &gcapList[i]);
+			//初始化摄像头
+			selectDevice(&gcapList[1], 1);
+			ToPreview(IDC_PREVIEW_AVI_2, &gcapList[1]);
 		}
 		
-	}
-
+	}*/
 	
-	
-
-
-	
-	
-
-
-	MessageBox(TEXT("打开摄像头成功"));
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
 
-/*
-void save(){
-long evCode = 0;
-long lBufferSize = 0;
-BYTE *p;
-gcap_1.m_pSampGrabber->GetCurrentBuffer(&lBufferSize, NULL);
-p = new BYTE[lBufferSize];
-gcap_1.m_pSampGrabber->GetCurrentBuffer(&lBufferSize, (LONG*)p);// get Current buffer
-g_sampleGrabberCB.SaveBitmap(p, lBufferSize); //save bitmap
-delete[] p;
-p = NULL;
 
-CString str;
-str.Format(_T("点击拍照啦！！！，获取到的长度为%d"), lBufferSize);
-MessageBox(str);
+void CScanDlg::stopVideo(){
+
+	/*for (int i = 0; i < carameCount; i++){
+		if (i >= 2){
+			break;
+		}
+		Carame * cur_gcap = &gcapList[i];
+		if (cur_gcap->m_pMC)cur_gcap->m_pMC->Stop();
+		if (cur_gcap->pVW){
+
+			cur_gcap->pVW->put_Visible(OAFALSE);
+
+			cur_gcap->pVW->put_Owner(NULL);
+		}
+
+		//释放变量
+		delete cur_gcap->pBuilder;
+		cur_gcap->pBuilder = NULL;
+		cur_gcap->m_pMC = NULL;
+	}*/
+	TRACE("==================================关闭scanDlg\n");
+	//delete cur_gcap;
+	//删除指针p之后，一定要加上下面这句话，免得成为野指针
+	//cur_gcap = NULL;
+
+	
 }
-*/
 
+void CScanDlg::takeAPicture(Carame* cur_gcap,int index){
+	StringCchPrintf(cur_gcap->g_sampleGrabberCB->m_cameraName, 50, TEXT("carame_") + index);
+	cur_gcap->g_sampleGrabberCB->m_bGetPicture = TRUE;
+}
 
 
 void CScanDlg::OnBnClickedButton1()
 {
-	// TODO:  在此添加控件通知处理程序代码
-	//摄像机名称
-	//StringCchPrintf(gcap_1.g_sampleGrabberCB.m_cameraName, 50, TEXT("system"));
-	//gcap_1.g_sampleGrabberCB.m_bGetPicture = TRUE;
-
 
 	for (int i = 0; i < carameCount; i++){
 		if (i >= 2){
 			break;
 		}
 		//摄像机2的名称
-		StringCchPrintf(gcapList[i].g_sampleGrabberCB.m_cameraName, 50, TEXT("carame_")+i);
-		gcapList[i].g_sampleGrabberCB.m_bGetPicture = TRUE;
+		takeAPicture(&gcapList[i],i);
+	
 	}
 
 
@@ -555,30 +584,5 @@ void CScanDlg::OnBnClickedButton1()
 	str.Format(_T("点击拍照啦！！"));
 
 	MessageBox(str);
-
-
-
-
-	/*HRESULT hr;
-	long evCode = 0;
-	long lBufferSize = 0;
-	BYTE *p;
-	hr = m_pMediaEvent->WaitForCompletion(INFINITE, &evCode);
-	if (SUCCEEDED(hr))
-	{
-		switch (evCode)
-		{
-		case EC_COMPLETE:
-			m_pSampGrabber->GetCurrentBuffer(&lBufferSize, NULL);
-			p = new BYTE[lBufferSize];
-			m_pSampGrabber->GetCurrentBuffer(&lBufferSize, (LONG*)p);// get Current buffer
-			g_sampleGrabberCB.SaveBitmap(p, lBufferSize); //save bitmap
-			delete[] p;
-			p = NULL;
-			break;
-		default:
-			break;
-		}
-	}*/
 	
 }

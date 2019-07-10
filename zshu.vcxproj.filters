@@ -45,9 +45,6 @@
     <ClInclude Include="Amcap\status.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ScanDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="SampleGrabberCallback.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -78,6 +75,9 @@
     <ClInclude Include="utils\HttpClient.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ScanDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -99,9 +99,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Amcap\status.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ScanDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SampleGrabberCallback.cpp">
@@ -132,6 +129,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="utils\HttpClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ScanDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
