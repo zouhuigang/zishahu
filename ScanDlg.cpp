@@ -15,11 +15,6 @@ CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 {
 
 	//初始化
-	m_hWnd = NULL;
-	m_pVW = NULL;
-	m_pMC = NULL;
-	m_pGB = NULL;
-	m_pCapture = NULL;
 	//_CrtSetBreakAlloc(646); //检测内存泄漏
 
 }
@@ -55,7 +50,6 @@ void CScanDlg::OnClose()
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	//CDialog *pdlg = (CDialog *)AfxGetMainWnd();
 	//pdlg->DestroyWindow();
-	stopVideo();
 	CDialogEx::OnClose();
 }
 
@@ -501,24 +495,17 @@ BOOL CScanDlg::OnInitDialog()
 	GetAllCapDevices();
 	
 
-	selectDevice(&gcapList[0], 0);
-	ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
-
-	selectDevice(&gcapList[1], 1);
-	ToPreview(IDC_PREVIEW_AVI_2, &gcapList[1]);
-	/*for (int i = 0; i < carameCount; i++){
+	for (int i = 0; i < carameCount; i++){
 		if (i>=2){
 			break;
 		}
-
-		TRACE("==================================获取到的摄像头数量为 = %d,i=%d\n", carameCount,i);
 
 		
 		//将摄像头显示到对应的mfc容器
 		if (i == 0){
 			//初始化摄像头
-			//selectDevice(&gcapList[0], 0);
-			//ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
+			selectDevice(&gcapList[0], 0);
+			ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
 		}
 		else if (i==1){
 			//初始化摄像头
@@ -526,40 +513,12 @@ BOOL CScanDlg::OnInitDialog()
 			ToPreview(IDC_PREVIEW_AVI_2, &gcapList[1]);
 		}
 		
-	}*/
+	}
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
 }
 
-
-void CScanDlg::stopVideo(){
-
-	/*for (int i = 0; i < carameCount; i++){
-		if (i >= 2){
-			break;
-		}
-		Carame * cur_gcap = &gcapList[i];
-		if (cur_gcap->m_pMC)cur_gcap->m_pMC->Stop();
-		if (cur_gcap->pVW){
-
-			cur_gcap->pVW->put_Visible(OAFALSE);
-
-			cur_gcap->pVW->put_Owner(NULL);
-		}
-
-		//释放变量
-		delete cur_gcap->pBuilder;
-		cur_gcap->pBuilder = NULL;
-		cur_gcap->m_pMC = NULL;
-	}*/
-	TRACE("==================================关闭scanDlg\n");
-	//delete cur_gcap;
-	//删除指针p之后，一定要加上下面这句话，免得成为野指针
-	//cur_gcap = NULL;
-
-	
-}
 
 void CScanDlg::takeAPicture(Carame* cur_gcap,int index){
 	StringCchPrintf(cur_gcap->g_sampleGrabberCB->m_cameraName, 50, TEXT("carame_") + index);
@@ -585,4 +544,11 @@ void CScanDlg::OnBnClickedButton1()
 
 	MessageBox(str);
 	
+}
+
+
+void CScanDlg::PostNcDestroy()
+{
+	// TODO:  在此添加专用代码和/或调用基类
+	CDialogEx::PostNcDestroy();
 }

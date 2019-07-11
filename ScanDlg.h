@@ -22,8 +22,6 @@
 #include "qedit.h"
 #include "SampleGrabberCallback.h"
 
-//摄像头容器位置
-#define IDC_CARAME_INIT 10000
 struct Carame
 {
 	TCHAR szCaptureFile[_MAX_PATH];
@@ -90,19 +88,14 @@ struct Carame
 	IMediaControl *m_pMC;//媒体控制接口
 	int index;//摄像头索引
 
-	//构造函数
 	Carame()
 	{
-		TRACE("==================================结构体初始化\n");
 		memset(this, 0, sizeof(Carame));
 		pVW = NULL;
 		m_pMC = NULL;
 		m_pSampGrabber = NULL;
-		//或者是下面的格式 
-		//memset(&nNum,0,sizeof(Stu));
 
 	}
-	//析构函数释放内存
 	~Carame(){
 
 		if (m_pMC)m_pMC->Stop();
@@ -112,7 +105,41 @@ struct Carame
 
 			pVW->put_Owner(NULL);
 		}
-		
+		if (m_pMC){
+			m_pMC->Release();
+			m_pMC = NULL;
+		}
+
+		if (pVW){
+			pVW->Release();
+			pVW = NULL;
+		}
+
+
+		if (m_pSampGrabber){
+			m_pSampGrabber->Release();
+			m_pSampGrabber = NULL;
+		}
+		if (pSampleGrabberFilter){
+			pSampleGrabberFilter->Release();
+			pSampleGrabberFilter = NULL;
+		}
+		if (m_pMediaEvent){
+			m_pMediaEvent->Release();
+			m_pMediaEvent = NULL;
+		}
+
+
+		if (pBuilder){
+			delete pBuilder;
+			pBuilder = NULL;
+		}
+
+		if (pFg){
+			pFg->Release();
+			pFg = NULL;
+		}
+
 
 		if (g_sampleGrabberCB){
 			g_sampleGrabberCB->Release();
@@ -120,45 +147,33 @@ struct Carame
 			g_sampleGrabberCB = NULL;
 		}
 
-		if (pBuilder){
-			delete pBuilder;
-			pBuilder = NULL;
-		}
-		if (m_pSampGrabber){
-			m_pSampGrabber->Release();
-			m_pSampGrabber = NULL;
-		}
+		
 
 		
 		
-		//CoUninitialize();
-	
-		TRACE("==================================结构体释放内存\n");
+
+		
 	}
 };
 
 #pragma once
 
 
-// CScanDlg 对话框
 
 class CScanDlg : public CDialogEx
 {
 	DECLARE_DYNAMIC(CScanDlg)
 
 public:
-	CScanDlg(CWnd* pParent = NULL);   // 标准构造函数
+	CScanDlg(CWnd* pParent = NULL);
 	virtual ~CScanDlg();
-
-// 对话框数据
 	enum { IDD = IDD_SCAN_DIALOG };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual void DoDataExchange(CDataExchange* pDX);
 
 	DECLARE_MESSAGE_MAP()
 	HRESULT SetupVideoWindow();
-	//void ResizeVideoWindow();
 	HRESULT InitAndStartPreview();
 	bool BindFilter(int deviceId, IBaseFilter **pFilter);
 public:
@@ -169,28 +184,20 @@ public:
 	CStatic m_preview_1;
 	CStatic m_preview_2;
 private:
-	
-
-	IMediaControl* m_pMC;//媒体控制，IVideoWindow
-	IVideoWindow* m_pVW;//IMediaControl
-	HWND m_hWnd;
-	IGraphBuilder *m_pGB;
-	ICaptureGraphBuilder2* m_pCapture;
-	IBaseFilter* m_pBF;
 	void GetAllCapDevices();
 	BOOL selectDevice(Carame* cur_gcap, int index);
 	BOOL MakeBuilder(Carame* cur_gcap);
 	BOOL MakeGraph(Carame* cur_gcap);
-	BOOL MakeCallback(Carame* cur_gcap);//回调
+	BOOL MakeCallback(Carame* cur_gcap);
 	HRESULT ToPreview(int DIV_ID, Carame* cur_gcap);
-	int carameCount;//读取到的摄像头个数
-	void stopVideo();//释放摄像头
-	IMoniker *rgpmVideoMenu[10];//摄像头驱动
-	Carame* gcapList;//摄像头列表
+	int carameCount;
+	IMoniker *rgpmVideoMenu[10];
+	Carame* gcapList;
 	void takeAPicture(Carame* cur_gcap, int index);//拍照
 	HRESULT ShowVideo(Carame* cur_gcap, int DIV_ID);
 	UINT __cdecl WaitProc(CScanDlg * pThis);
 
 public:
 	afx_msg void OnBnClickedButton1();
+	virtual void PostNcDestroy();
 };
