@@ -118,6 +118,7 @@
       <AdditionalLibraryDirectories>D:\workspaces_c\zshu\lib;C:\Users\zouhu\Downloads\curl-7.65.1\curl-7.65.1\builds\libcurl-vc12-x86-debug-static-ipv6-sspi-winssl\lib;D:\BaiduNetdiskDownload\Windows系统\SDK\SDK\USBCamera_SDK\DirectShow\Samples\C++\DirectShow\BaseClasses\Debug_Unicode;D:\BaiduNetdiskDownload\Windows系统\SDK\SDK\USBCamera_SDK\DirectShow\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>..\..\baseclasses\debug_unicode\strmbasd.lib;quartz.lib;winmm.lib;msacm32.lib;olepro32.lib;libcurl_a_debug.lib;Ws2_32.lib;Wldap32.lib;Crypt32.lib;Normaliz.lib;json_vc71_libmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StackReserveSize>100000000</StackReserveSize>
+      <StackCommitSize>100000000</StackCommitSize>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -214,10 +215,9 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Amcap\amcap.h" />
-    <ClInclude Include="Amcap\crossbar.h" />
     <ClInclude Include="Amcap\SampleCGB.h" />
     <ClInclude Include="Amcap\status.h" />
+    <ClInclude Include="CarameVideo.h" />
     <ClInclude Include="database.h" />
     <ClInclude Include="db\sqlite3.h" />
     <ClInclude Include="ImageFormatConversion.h" />
@@ -236,10 +236,9 @@
     <ClInclude Include="zshuDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Amcap\amcap.cpp" />
-    <ClCompile Include="Amcap\crossbar.cpp" />
     <ClCompile Include="Amcap\SampleCGB.cpp" />
     <ClCompile Include="Amcap\status.cpp" />
+    <ClCompile Include="CarameVideo.cpp" />
     <ClCompile Include="database.cpp" />
     <ClCompile Include="db\sqlite3.c" />
     <ClCompile Include="ImageFormatConversion.cpp" />

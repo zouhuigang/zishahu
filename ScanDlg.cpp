@@ -22,9 +22,18 @@ CScanDlg::CScanDlg(CWnd* pParent /*=NULL*/)
 CScanDlg::~CScanDlg()
 {
 	//free mem
-	CoUninitialize();
 	TRACE("==================================调用析构函数\n");
+
+	if (NULL != cur_gcap){
+		delete cur_gcap;
+	}
+
+	if (NULL != cur_gcap2){
+		delete cur_gcap2;
+	}
+
 	delete[] gcapList;
+	CoUninitialize();
 }
 
 
@@ -301,10 +310,32 @@ HRESULT CScanDlg::ShowVideo(Carame* cur_gcap,int DIV_ID){
 	// run the filter graph，IMediaControl接口提供了数据在Filer Graph中的流向
 	//OAFilterState pfs;
 	//hr = cur_gcap->m_pMC->GetState(100, &pfs);//测试Run之前
+	//TRACE("==================================hr=%d\n", hr);
 	hr = cur_gcap->m_pMC->Run();
 
+	//hr = cur_gcap->m_pMC->GetState(100, &pfs);//测试Run之前
+
+	//TRACE("==================================pfs = %d,hr=%d\n", pfs, hr);
 	DWORD r = GetLastError();
 	TRACE("==================================错误 = %d,hr=%d\n", r, hr);
+
+	/*if (hr != S_OK)
+	{
+		FILTER_STATE fs;
+		hr = g_pMC->GetState(1000, (OAFilterState*)&fs);
+		switch (fs)
+		{
+		case State_Stopped:
+			MessageBox(NULL, "Graph Stopped", "Info", MB_OK);
+			break;
+		case State_Paused:
+			MessageBox(NULL, "Graph Paused", "Info", MB_OK);
+			break;
+		case State_Running:
+			MessageBox(NULL, "Graph Running", "Info", MB_OK);
+			break;
+		}
+	}*/
 	if (FAILED(hr))
 	{
 		MessageBox(TEXT("视频不能预览"));
@@ -315,14 +346,51 @@ HRESULT CScanDlg::ShowVideo(Carame* cur_gcap,int DIV_ID){
 	return hr;
 }
 
-
-// 线程调用函数
-UINT __cdecl CScanDlg::WaitProc(CScanDlg * pThis)
+void  CScanDlg::GetComExceptionMessage(HRESULT hr)
 {
-	long evCode;
-	//pThis->m_pEvent->WaitForCompletion(INFINITE, &evCode); // Wait until the graph stops
-	//AfxGetMainWnd()->PostMessage(WM_COMMAND, ID_ANA_ACTIONFINISHED);
-	return 0;
+	switch (hr)
+	{
+	case S_OK:
+	case S_FALSE:
+		TRACE("==================================无执行错误,hr=%ld\n", hr);
+		break;
+	case E_FAIL:
+		TRACE("==================================语法错误,hr=%ld\n", hr);
+		break;
+	case E_INVALIDARG:
+		TRACE("==================================一个或多个参数无效,hr=%ld\n", hr);
+		break;
+	case E_NOINTERFACE:
+		TRACE("==================================不支持此接口,hr=%ld\n", hr);
+		break;
+	case E_NOTIMPL:
+		TRACE("==================================未实现,hr=%ld\n", hr);
+		break;
+	case E_OUTOFMEMORY:
+		TRACE("==================================未能分配所需的内存,hr=%ld\n", hr);
+		break;
+	case E_POINTER:
+		TRACE("==================================无效的指针,hr=%ld\n", hr);
+		break;
+	case E_UNEXPECTED:
+		TRACE("==================================未知错误,hr=%ld\n", hr);
+		break;
+	case E_HANDLE:
+		TRACE("==================================无效句柄,hr=%ld\n", hr);
+		break;
+	case E_ABORT:
+		TRACE("==================================执行被取消,hr=%ld\n", hr);
+		break;
+	case E_ACCESSDENIED:
+		TRACE("==================================禁止访问,hr=%ld\n", hr);
+		break;
+	case E_PENDING:
+		TRACE("==================================执行被挂起,hr=%ld\n", hr);
+		break;
+	default:
+		TRACE("==================================default,hr=%ld\n", hr);
+	}
+	return;
 }
 
 
@@ -475,6 +543,15 @@ BOOL CScanDlg::selectDevice(Carame* cur_gcap, int index){
 }
 
 
+//子摄像头
+/*UINT ChildThread1(LPVOID Param){
+
+	return 0;
+}
+UINT  ChildThread2(LPVOID Param){
+
+	return 0;
+}*/
 
 
 //选择设备
@@ -488,32 +565,46 @@ BOOL CScanDlg::OnInitDialog()
 	if (FAILED(hr)){
 		MessageBox(TEXT("不支持COM组件的初始化，导致动画未被载入"));
 	}
-
-	//声明摄像头
-	gcapList = new Carame[2];//摄像头列表,存储2个摄像头
-	//列举摄像头驱动
-	GetAllCapDevices();
-	
-
-	for (int i = 0; i < carameCount; i++){
-		if (i>=2){
-			break;
-		}
-
-		
-		//将摄像头显示到对应的mfc容器
-		if (i == 0){
-			//初始化摄像头
-			selectDevice(&gcapList[0], 0);
-			ToPreview(IDC_PREVIEW_AVI_1, &gcapList[0]);
-		}
-		else if (i==1){
-			//初始化摄像头
-			selectDevice(&gcapList[1], 1);
-			ToPreview(IDC_PREVIEW_AVI_2, &gcapList[1]);
-		}
-		
+	cur_gcap = new CarameVideo();
+	cur_gcap->Run(0);
+	HWND hwndPreview = NULL;//预览窗口
+	GetDlgItem(IDC_PREVIEW_AVI_1, &hwndPreview);
+	RECT rc;
+	::GetWindowRect(hwndPreview, &rc);
+	hr = cur_gcap->pVW->put_Owner((OAHWND)hwndPreview);
+	hr = cur_gcap->pVW->put_Left(0);
+	hr = cur_gcap->pVW->put_Top(0);
+	hr = cur_gcap->pVW->put_Width(rc.right - rc.left);
+	hr = cur_gcap->pVW->put_Height(rc.bottom - rc.top);
+	hr = cur_gcap->pVW->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS);
+	hr = cur_gcap->pVW->put_Visible(OATRUE);
+	hr = cur_gcap->m_pMC->Run();
+	if (FAILED(hr))
+	{
+		MessageBox(TEXT("视频不能预览"));
+		return hr;
 	}
+
+	cur_gcap2 = new CarameVideo();
+	cur_gcap2->Run(0);
+	HWND hwndPreview2 = NULL;//预览窗口
+	GetDlgItem(IDC_PREVIEW_AVI_2, &hwndPreview2);
+	RECT rc2;
+	::GetWindowRect(hwndPreview2, &rc2);
+	hr = cur_gcap2->pVW->put_Owner((OAHWND)hwndPreview2);
+	hr = cur_gcap2->pVW->put_Left(0);
+	hr = cur_gcap2->pVW->put_Top(0);
+	hr = cur_gcap2->pVW->put_Width(rc.right - rc.left);
+	hr = cur_gcap2->pVW->put_Height(rc.bottom - rc.top);
+	hr = cur_gcap2->pVW->put_WindowStyle(WS_CHILD | WS_CLIPSIBLINGS);
+	hr = cur_gcap2->pVW->put_Visible(OATRUE);
+	hr = cur_gcap2->m_pMC->Run();
+	if (FAILED(hr))
+	{
+		MessageBox(TEXT("视频不能预览"));
+		return hr;
+	}
+	
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE

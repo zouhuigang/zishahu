@@ -33,12 +33,6 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Amcap\amcap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Amcap\crossbar.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Amcap\SampleCGB.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -78,6 +72,9 @@
     <ClInclude Include="ScanDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CarameVideo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -87,12 +84,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Amcap\amcap.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Amcap\crossbar.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Amcap\SampleCGB.cpp">
@@ -132,6 +123,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ScanDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CarameVideo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
