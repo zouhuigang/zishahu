@@ -71,7 +71,7 @@ struct Carame
 	ISampleGrabber *m_pSampGrabber;//为了截图引入qedit
 	IMediaEventEx *m_pMediaEvent;//媒体控制
 	IBaseFilter *pSampleGrabberFilter;//截图变量
-	SampleGrabberCallback *g_sampleGrabberCB;//回调
+	SampleGrabberCallback* g_sampleGrabberCB;//回调
 	IVideoWindow *pVW;//视频窗口接口
 	IMediaControl *m_pMC;//媒体控制接口
 	int index;//摄像头索引
@@ -133,8 +133,6 @@ struct Carame
 			delete g_sampleGrabberCB;
 			g_sampleGrabberCB = NULL;
 		}
-
-
 
 
 

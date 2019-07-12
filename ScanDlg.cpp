@@ -34,7 +34,7 @@ CScanDlg::~CScanDlg()
 		delete cur_gcap2;
 		cur_gcap2 = NULL;
 	}
-	CoUninitialize();
+	//CoUninitialize();
 }
 
 
@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CScanDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON1, &CScanDlg::OnBnClickedButton1)
 	ON_MESSAGE(WM_UPDATE_STATIC, &CScanDlg::OnUpdateStatic)
 	ON_MESSAGE(WM_UPDATE_STATIC_2, &CScanDlg::OnUpdateStatic2)
+	ON_BN_CLICKED(IDC_BUTTON2, &CScanDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -96,15 +97,23 @@ UINT  ChildThread2(LPVOID Param){
 //处理线程中的数据
 LRESULT CScanDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 {
+
+	
+
+
 	cur_gcap = new CarameVideo();
 	cur_gcap->Run(0);
 	Sleep(100);
 	HRESULT hr = S_OK;
-	HWND hwndPreview = NULL;//预览窗口
-	GetDlgItem(IDC_PREVIEW_AVI_1, &hwndPreview);
+	//HWND hwndPreview = NULL;//预览窗口
+	//GetDlgItem(IDC_PREVIEW_AVI_1, &hwndPreview);
+	CWnd* pWnd = GetDlgItem(IDC_PREVIEW_AVI_1);
+	pWnd->ModifyStyle(0, WS_CLIPCHILDREN);
 	RECT rc;
-	::GetWindowRect(hwndPreview, &rc);
-	hr = cur_gcap->pVW->put_Owner((OAHWND)hwndPreview);
+	//::GetWindowRect(hwndPreview, &rc);
+	pWnd->GetWindowRect(&rc);
+	//hr = cur_gcap->pVW->put_Owner((OAHWND)hwndPreview);
+	hr = cur_gcap->pVW->put_Owner((OAHWND)pWnd->GetSafeHwnd());
 	hr = cur_gcap->pVW->put_Left(0);
 	hr = cur_gcap->pVW->put_Top(0);
 	hr = cur_gcap->pVW->put_Width(rc.right - rc.left);
@@ -129,11 +138,17 @@ LRESULT CScanDlg::OnUpdateStatic2(WPARAM wParam, LPARAM lParam)
 	cur_gcap2->Run(1);
 	
 	HRESULT hr = S_OK;
-	HWND hwndPreview = NULL;//预览窗口
-	GetDlgItem(IDC_PREVIEW_AVI_2, &hwndPreview);
+	//HWND hwndPreview = NULL;//预览窗口
+	//GetDlgItem(IDC_PREVIEW_AVI_2, &hwndPreview);
+	CWnd* pWnd = GetDlgItem(IDC_PREVIEW_AVI_2);
+	pWnd->ModifyStyle(0, WS_CLIPCHILDREN);
+
+	
 	RECT rc;
-	::GetWindowRect(hwndPreview, &rc);
-	hr = cur_gcap2->pVW->put_Owner((OAHWND)hwndPreview);
+	pWnd->GetWindowRect(&rc);
+	hr = cur_gcap2->pVW->put_Owner((OAHWND)pWnd->GetSafeHwnd());
+	//::GetWindowRect(hwndPreview, &rc);
+	//hr = cur_gcap2->pVW->put_Owner((OAHWND)hwndPreview);
 	hr = cur_gcap2->pVW->put_Left(0);
 	hr = cur_gcap2->pVW->put_Top(0);
 	hr = cur_gcap2->pVW->put_Width(rc.right - rc.left);
@@ -158,15 +173,12 @@ BOOL CScanDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	//不支持com组件的就会失败!
-	HRESULT hr = CoInitialize(NULL);
+	/*HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)){
 		MessageBox(TEXT("不支持COM组件的初始化，导致动画未被载入"));
-	}
+	}*/
 
 	//开启多线程,貌似没什么用
-	AfxBeginThread(ChildThread1, (LPVOID)this, THREAD_PRIORITY_NORMAL);//开启子线程1
-
-	AfxBeginThread(ChildThread2, (LPVOID)this, THREAD_PRIORITY_NORMAL);//开启子线程2
 	//OnUpdateStatic(0, 0);
 	//OnUpdateStatic2(0,0);
 
@@ -196,4 +208,33 @@ void CScanDlg::PostNcDestroy()
 {
 	// TODO:  在此添加专用代码和/或调用基类
 	CDialogEx::PostNcDestroy();
+}
+
+
+void CScanDlg::OnBnClickedButton2()
+{
+	// TODO:  在此添加控件通知处理程序代码
+
+	HRESULT hr = CoInitialize(NULL);
+	if (FAILED(hr)){
+		MessageBox(TEXT("不支持COM组件的初始化，导致动画未被载入"));
+	}
+
+	if (NULL != cur_gcap){
+		delete cur_gcap;
+		cur_gcap = NULL;
+		TRACE("关闭摄像头1\n");
+	}
+	if (NULL != cur_gcap2){
+		delete cur_gcap2;
+		cur_gcap2 = NULL;
+		TRACE("关闭摄像头2\n");
+	}
+
+	OnUpdateStatic(0, 0);
+	OnUpdateStatic2(0, 0);
+
+	CoUninitialize();
+
+	
 }

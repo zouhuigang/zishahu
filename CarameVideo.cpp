@@ -38,12 +38,6 @@ BOOL CarameVideo::MakeGraph()
 	HRESULT hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC,
 		IID_IGraphBuilder, (LPVOID *)&pFg);
 
-	//新增
-	/*hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER,
-	IID_ICaptureGraphBuilder2, (LPVOID*) & pFg);
-	if (FAILED(hr))
-	return hr;*/
-	//TRACE("==================================MakeGraph:%p\n", pFg);
 
 	return (hr == NOERROR) ? TRUE : FALSE;
 }
@@ -60,7 +54,7 @@ BOOL CarameVideo::MakeCallback()
 	{
 		return FALSE;
 	}
-
+	
 	return TRUE;
 }
 
@@ -344,6 +338,7 @@ BOOL CarameVideo::selectDevice(int index){
 
 	if (pmVideo != tmp_pmVideo){
 		pmVideo->AddRef();
+		//TRACE("获取新的指针");
 	}
 
 	pVCap = NULL;

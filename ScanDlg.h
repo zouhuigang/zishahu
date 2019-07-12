@@ -11,7 +11,6 @@
 #include <atlbase.h>
 #include <strsafe.h>
 #include "stdafx.h"
-
 #include "CarameVideo.h"
 #define WM_UPDATE_STATIC (WM_USER + 100) 
 #define WM_UPDATE_STATIC_2 (WM_USER + 101) 
@@ -50,4 +49,5 @@ private:
 public:
 	afx_msg void OnBnClickedButton1();
 	virtual void PostNcDestroy();
+	afx_msg void OnBnClickedButton2();
 };
