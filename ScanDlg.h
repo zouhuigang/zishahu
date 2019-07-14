@@ -6,18 +6,19 @@
 #include <msacm.h>
 #include <fcntl.h>
 #include <io.h>
+#pragma once
 #include <stdio.h>
 #include <commdlg.h>
 #include <atlbase.h>
 #include <strsafe.h>
 #include "stdafx.h"
-#include "CarameVideo.h"
+#include "CCaptureClass.h"
+#include "afxwin.h"
 #define WM_UPDATE_STATIC (WM_USER + 100) 
-#define WM_UPDATE_STATIC_2 (WM_USER + 101) 
+#define WM_UPDATE_STATIC_2 (WM_USER + 101)
 UINT ChildThread1(LPVOID Param);
 UINT ChildThread2(LPVOID Param);
  
-#pragma once
 
 
 
@@ -39,12 +40,15 @@ protected:
 public:
 	afx_msg void OnClose();
 	virtual BOOL OnInitDialog();
-	CarameVideo * cur_gcap;
-	CarameVideo * cur_gcap2;
+	//CarameVideo * cur_gcap;
+	//CarameVideo * cur_gcap2;
 
 private:
 	CStatic m_preview_1;
 	CStatic m_preview_2;
+	CComboBox m_listCtrl;
+	CCaptureClass m_cap;
+	CCaptureClass m_cap2;
 
 public:
 	afx_msg void OnBnClickedButton1();

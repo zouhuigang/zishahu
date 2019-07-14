@@ -25,7 +25,7 @@ CScanDlg::~CScanDlg()
 	//free mem
 	TRACE("==================================调用析构函数\n");
 
-	if (NULL != cur_gcap){
+	/*if (NULL != cur_gcap){
 		delete cur_gcap;
 		cur_gcap = NULL;
 	}
@@ -33,7 +33,7 @@ CScanDlg::~CScanDlg()
 	if (NULL != cur_gcap2){
 		delete cur_gcap2;
 		cur_gcap2 = NULL;
-	}
+	}*/
 	//CoUninitialize();
 }
 
@@ -43,14 +43,15 @@ void CScanDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_PREVIEW_AVI_1, m_preview_1);
 	DDX_Control(pDX, IDC_PREVIEW_AVI_2, m_preview_2);
+	DDX_Control(pDX, IDC_COMBO1, m_listCtrl);
 }
 
 
 BEGIN_MESSAGE_MAP(CScanDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON1, &CScanDlg::OnBnClickedButton1)
-	ON_MESSAGE(WM_UPDATE_STATIC, &CScanDlg::OnUpdateStatic)
-	ON_MESSAGE(WM_UPDATE_STATIC_2, &CScanDlg::OnUpdateStatic2)
+	//ON_MESSAGE(WM_UPDATE_STATIC, &CScanDlg::OnUpdateStatic)
+	//ON_MESSAGE(WM_UPDATE_STATIC_2, &CScanDlg::OnUpdateStatic2)
 	ON_BN_CLICKED(IDC_BUTTON2, &CScanDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
@@ -68,7 +69,7 @@ void CScanDlg::OnClose()
 
 
 //子摄像头
-UINT ChildThread1(LPVOID Param){
+/*UINT ChildThread1(LPVOID Param){
 
 	CScanDlg* pc1 = (CScanDlg*)Param;//获取主对话框类
 
@@ -91,7 +92,7 @@ UINT  ChildThread2(LPVOID Param){
 		
 	}
 	return 0;
-}
+}*/
 
 
 //处理线程中的数据
@@ -100,7 +101,7 @@ LRESULT CScanDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 
 	
 
-
+	/*
 	cur_gcap = new CarameVideo();
 	cur_gcap->Run(0);
 	Sleep(100);
@@ -128,12 +129,13 @@ LRESULT CScanDlg::OnUpdateStatic(WPARAM wParam, LPARAM lParam)
 		MessageBox(TEXT("视频不能预览1"));
 		return hr;
 	}
-
+	*/
 	return 0;
 }
 
 LRESULT CScanDlg::OnUpdateStatic2(WPARAM wParam, LPARAM lParam)
 {
+	/*
 	cur_gcap2 = new CarameVideo();
 	cur_gcap2->Run(1);
 	
@@ -163,7 +165,7 @@ LRESULT CScanDlg::OnUpdateStatic2(WPARAM wParam, LPARAM lParam)
 		MessageBox(TEXT("视频不能预览2"));
 		return hr;
 	}
-
+	*/
 	return 0;
 }
 
@@ -182,7 +184,9 @@ BOOL CScanDlg::OnInitDialog()
 	//OnUpdateStatic(0, 0);
 	//OnUpdateStatic2(0,0);
 
-	
+	m_cap.EnumDevices(m_listCtrl.GetSafeHwnd());
+	m_listCtrl.SetCurSel(1);
+
 	
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -194,8 +198,8 @@ BOOL CScanDlg::OnInitDialog()
 void CScanDlg::OnBnClickedButton1()
 {
 
-	cur_gcap->takeAPicture(0);
-	cur_gcap2->takeAPicture(1);
+	//cur_gcap->takeAPicture(0);
+	//cur_gcap2->takeAPicture(1);
 	CString str;
 	str.Format(_T("点击拍照啦！！"));
 
@@ -215,7 +219,7 @@ void CScanDlg::OnBnClickedButton2()
 {
 	// TODO:  在此添加控件通知处理程序代码
 
-	HRESULT hr = CoInitialize(NULL);
+	/*HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)){
 		MessageBox(TEXT("不支持COM组件的初始化，导致动画未被载入"));
 	}
@@ -235,6 +239,13 @@ void CScanDlg::OnBnClickedButton2()
 	OnUpdateStatic2(0, 0);
 
 	CoUninitialize();
+	*/
+	HWND hVWindow = m_preview_1.GetSafeHwnd();  // 获取视频显示窗口的句柄
+	//int id = m_listCtrl.GetCurSel();          // 获取当前选中的视频设备
+	//m_cap.PreviewImages(0, hVWindow);     // 开始预览视频
 
+
+	HWND hVWindow2 = m_preview_2.GetSafeHwnd();  // 获取视频显示窗口的句柄
+	m_cap.PreviewImages(0, hVWindow, hVWindow2);     // 开始预览视频
 	
 }

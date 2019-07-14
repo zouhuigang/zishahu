@@ -1,13 +1,17 @@
 #include "stdafx.h"
 #include "CarameVideo.h"
 
-
+//https://blog.csdn.net/chenyujing1234/article/details/7576463
+//https://github.com/huangjiefeng/Kinect/blob/58404e7004bee893ebe633e644b719cfc63ecd13/%E6%91%84%E5%83%8F%E5%A4%B4%E6%98%BE%E7%A4%BAdemo/Win32Project2/GraphUtil.cpp
 CarameVideo::CarameVideo()
 {
 	m_pMC = NULL;
 	pVW = NULL;
 	m_pSampGrabber = NULL;
 	m_pMediaEvent = NULL;
+	pmVideo = NULL;
+	pmAudio = NULL;
+	rgpmAudioMenu[10] = NULL;
 }
 
 
@@ -449,21 +453,16 @@ CarameVideo::~CarameVideo()
 
 
 	if (pVW){
-
-		pVW->put_Visible(OAFALSE);
-
-		pVW->put_Owner(NULL);
+			pVW->put_Visible(OAFALSE);
+			pVW->put_MessageDrain((OAHWND)NULL);
+			pVW->put_Owner(OAHWND(0));
+			pVW->Release();
+			pVW = NULL;
 	}
 	if (m_pMC){
 		m_pMC->Release();
 		m_pMC = NULL;
 	}
-
-	if (pVW){
-		pVW->Release();
-		pVW = NULL;
-	}
-
 
 	if (m_pSampGrabber){
 		m_pSampGrabber->Release();

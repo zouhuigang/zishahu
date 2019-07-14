@@ -218,6 +218,7 @@
     <ClInclude Include="Amcap\SampleCGB.h" />
     <ClInclude Include="Amcap\status.h" />
     <ClInclude Include="CarameVideo.h" />
+    <ClInclude Include="CCaptureClass.h" />
     <ClInclude Include="database.h" />
     <ClInclude Include="db\sqlite3.h" />
     <ClInclude Include="ImageFormatConversion.h" />
@@ -239,6 +240,7 @@
     <ClCompile Include="Amcap\SampleCGB.cpp" />
     <ClCompile Include="Amcap\status.cpp" />
     <ClCompile Include="CarameVideo.cpp" />
+    <ClCompile Include="CCaptureClass.cpp" />
     <ClCompile Include="database.cpp" />
     <ClCompile Include="db\sqlite3.c" />
     <ClCompile Include="ImageFormatConversion.cpp" />

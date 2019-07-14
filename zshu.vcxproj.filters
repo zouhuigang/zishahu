@@ -75,6 +75,9 @@
     <ClInclude Include="CarameVideo.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CCaptureClass.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="zshu.cpp">
@@ -126,6 +129,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CarameVideo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CCaptureClass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
