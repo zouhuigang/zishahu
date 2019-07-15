@@ -42,6 +42,8 @@ BEGIN_MESSAGE_MAP(CScanDlg, CDialogEx)
 	//ON_MESSAGE(WM_UPDATE_STATIC, &CScanDlg::OnUpdateStatic)
 	//ON_MESSAGE(WM_UPDATE_STATIC_2, &CScanDlg::OnUpdateStatic2)
 	ON_BN_CLICKED(IDC_BUTTON2, &CScanDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CScanDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON4, &CScanDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -189,10 +191,36 @@ void CScanDlg::OnBnClickedButton1()
 
 	//cur_gcap->takeAPicture(0);
 	//cur_gcap2->takeAPicture(1);
-	CString str;
-	str.Format(_T("点击拍照啦！！"));
+	/*TCHAR m_chSwapStr[MAX_PATH];
+	SYSTEMTIME sysTime;
+	GetLocalTime(&sysTime);
+	StringCchPrintf(m_chSwapStr, MAX_PATH, TEXT("\\%s_%04i%02i%02i%02i%02i%02i%03i.bmp"),
+		"zzz",
+		sysTime.wYear, sysTime.wMonth, sysTime.wDay, sysTime.wHour,
+		sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
+	if (m_cap.CaptureBitmap((const   char  *)m_chSwapStr))
+	{
+		CString str;
+		str.Format(_T("拍照成功！！"));
 
-	MessageBox(str);
+		MessageBox(str);
+	}else{
+			MessageBox(_T(" 抓图失败 !"));
+	}*/
+
+	
+	if (m_cap.TakeAPicture())
+	{
+		CString str;
+		str.Format(_T("拍照成功！！"));
+
+		MessageBox(str);
+	}
+	else{
+		MessageBox(_T(" 抓图失败 !"));
+	}
+
+	
 	
 }
 
@@ -234,7 +262,21 @@ void CScanDlg::OnBnClickedButton2()
 	m_cap.PreviewImages(0, hVWindow);     // 开始预览视频
 
 
-	HWND hVWindow2 = m_preview_2.GetSafeHwnd();  // 获取视频显示窗口的句柄
-	m_cap2.PreviewImages(1, hVWindow2);     // 开始预览视频
+	//HWND hVWindow2 = m_preview_2.GetSafeHwnd();  // 获取视频显示窗口的句柄
+	//m_cap2.PreviewImages(1, hVWindow2);     // 开始预览视频
 	
+}
+
+
+void CScanDlg::OnBnClickedButton3()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	m_cap.Pause();
+}
+
+
+void CScanDlg::OnBnClickedButton4()
+{
+	// TODO:  在此添加控件通知处理程序代码
+	m_cap.Play();
 }

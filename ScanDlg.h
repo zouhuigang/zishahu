@@ -54,4 +54,6 @@ public:
 	afx_msg void OnBnClickedButton1();
 	virtual void PostNcDestroy();
 	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedButton4();
 };

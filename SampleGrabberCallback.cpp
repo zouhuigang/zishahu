@@ -82,10 +82,9 @@ BOOL  SampleGrabberCallback::SaveBitmap(BYTE * pBuffer, long lBufferSize)
 	SYSTEMTIME sysTime;
 	GetLocalTime(&sysTime);
 	StringCchCopy(m_chSwapStr, MAX_PATH, m_chTempPath);
-	StringCchPrintf(m_chDirName, MAX_PATH, TEXT("\\%s_%04i%02i%02i%02i%02i%02i%03i_%ld.bmp"),
-		m_cameraName,
+	StringCchPrintf(m_chDirName, MAX_PATH, TEXT("\\%04i%02i%02i%02i%02i%02i%03i.bmp"),
 		sysTime.wYear, sysTime.wMonth, sysTime.wDay, sysTime.wHour,
-		sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds, lBufferSize);
+		sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
 	StringCchCat(m_chSwapStr, MAX_PATH, m_chDirName);
 
 	HANDLE hf = CreateFile(

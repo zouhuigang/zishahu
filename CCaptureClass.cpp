@@ -15,6 +15,8 @@ CCaptureClass::CCaptureClass()
 	pGrabber = NULL; //
 	pEvent = NULL; // 媒体事件接口指针清空
 	m_pCapture = NULL;   // 增强型捕获滤波器链表管理器接口指针清空
+	sGrabberCallback = NULL;//回调清空
+	MakeCallback();//新建设置回调
 
 }
 /* 析构函数实现 */
@@ -33,6 +35,13 @@ CCaptureClass::~CCaptureClass()
 	srelease(m_pMC);       // 释放媒体控制接口
 	srelease(m_pGB);       // 释放滤波器链表管理器接口
 	srelease(m_pBF);      // 释放捕获滤波器接口
+
+
+	if (NULL != sGrabberCallback){//回调卸载
+			sGrabberCallback->Release();
+			delete sGrabberCallback;
+			sGrabberCallback = NULL;
+	}
 
 	CoUninitialize();     // 卸载 COM 库
 }
@@ -110,6 +119,9 @@ HRESULT CCaptureClass::SetupVideoWindow()
 	if (FAILED(hr)) return hr;
 	ResizeVideoWindow();                           // 更改窗口大小
 	hr = m_pVW->put_Visible(OATRUE);              // 视频窗口可见
+
+	//处理事件
+	pEvent->SetNotifyWindow((OAHWND)m_hWnd, WM_GRAPHNOTIFY, 0);
 	return hr;
 }
 /* 更改视频窗口大小 */
@@ -133,24 +145,23 @@ HRESULT CCaptureClass::InitCaptureGraphBuilder()
 	HRESULT hr;
 	//创建IGraphBuilder接口
 	hr = CoCreateInstance(CLSID_FilterGraph, NULL,CLSCTX_INPROC_SERVER,IID_IGraphBuilder, (void **)&m_pGB);
-	TRACE("InitCaptureGraphBuilder init:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//创建ICaptureGraphBuilder2接口
 	hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL,
 		CLSCTX_INPROC,
 		IID_ICaptureGraphBuilder2, (void **)&m_pCapture);
-	TRACE("InitCaptureGraphBuilder0:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//初始化滤波器链表管理器IGraphBuilder
 	m_pCapture->SetFiltergraph(m_pGB);
 	//查询媒体控制接口
 	hr = m_pGB->QueryInterface(IID_IMediaControl, (void **)&m_pMC);
-	TRACE("InitCaptureGraphBuilder1:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//查询视频窗口接口
 	hr = m_pGB->QueryInterface(IID_IVideoWindow, (LPVOID *)&m_pVW);
-	TRACE("InitCaptureGraphBuilder2:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
+	//媒体事件接口
+	hr = m_pGB->QueryInterface(IID_IMediaEventEx, (LPVOID*)&pEvent);
+	if (FAILED(hr))return hr;
 	return hr;
 }
 
@@ -191,14 +202,11 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd)
 
 	hr = pGrabberF->QueryInterface(IID_ISampleGrabber, (void **)&pGrabber);
 	//  把滤波器添加到滤波器链表中
-
-
 	hr = m_pGB->AddFilter(pGrabberF, L"Sample Grabber");
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t add the grabber"));
-		return  hr;
-	}
+	if (FAILED(hr)){AfxMessageBox(_T("Can ’ t add the grabber"));return  hr;}
+	//采样滤波器设置回调
+	hr = pGrabber->SetCallback(sGrabberCallback, 1);
+	if (FAILED(hr)){ AfxMessageBox(_T("添加回调失败")); return  hr; }
 
 	
 	// Add the Null Renderer filter to the graph.
@@ -220,6 +228,8 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd)
 		return  hr;
 	}
 
+
+
 	
 	// 设置视频显示窗口
 	m_hWnd = hWnd;         // 初始化窗口句柄
@@ -228,8 +238,8 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd)
 
 
 	hr = m_pMC->Run();   // 开始采集、预览视频，在指定窗口显示视频
-	TRACE("不能运行图:0x%x\n",hr);
 	if (FAILED(hr)) {
+		TRACE("不能运行图:0x%x\n", hr);
 		AfxMessageBox(_T("Couldn't run the graph!"));
 		return hr;
 	}
@@ -258,9 +268,11 @@ HRESULT CCaptureClass::CaptureImages(CString inFileName)
 }
 
 
-BOOL CCaptureClass::CaptureBitmap(const   char  * outFile) //const char * outFile)
-{
+//===============截图会暂停
+BOOL CCaptureClass::CaptureBitmap(const   char  * outFile){
+	bool  pass = false;
 	HRESULT hr = 0;
+
 	// 取得当前所连接媒体的类型
 	AM_MEDIA_TYPE mt;
 	hr = pGrabber->GetConnectedMediaType(&mt);
@@ -274,30 +286,36 @@ BOOL CCaptureClass::CaptureBitmap(const   char  * outFile) //const char * outFil
 	}
 	else
 	{
+		FreeMediaType(mt);
 		// Wrong format. Free the format block and return an error.
 		return  VFW_E_INVALIDMEDIATYPE;
 	}
-	// Set one-shot mode and buffering.
+	// 如果摄像头采集帧率为30，SetOneShot(FALSE)回调模式，就一秒进去回调函数30次。而OneShot模式会取到重复的帧
 	hr = pGrabber->SetOneShot(TRUE);
 
 	if (SUCCEEDED(pGrabber->SetBufferSamples(TRUE)))
 	{
-		bool  pass = false;
-		m_pMC->Run();
+		
+		if (m_pMC != NULL){
+			m_pMC->Run();
+		};
 		long  EvCode = 0;
 		hr = pEvent->WaitForCompletion(INFINITE, &EvCode);
 		//find the required buffer size
-		long  cbBuffer = 0;
-		if (SUCCEEDED(pGrabber->GetCurrentBuffer(&cbBuffer, NULL)))
+		Sleep(1000);
+		long  size = 0;
+
+		//Do not call this method while the filter graph is running
+		if (SUCCEEDED(pGrabber->GetCurrentBuffer(&size, NULL)))
 		{
 			//Allocate the array and call the method a second time to copy the buffer:
-			char  *pBuffer = new   char[cbBuffer];
+			char  *pBuffer = new char[size];
 			if (!pBuffer)
 			{
 				// Out of memory. Return an error code.
 				AfxMessageBox(_T("Out of Memory"));
 			}
-			hr = pGrabber->GetCurrentBuffer(&cbBuffer, (long *)(pBuffer));
+			hr = pGrabber->GetCurrentBuffer(&size, (long *)(pBuffer));
 			// 写到 BMP 文件中
 			HANDLE hf = CreateFile(LPCTSTR(outFile), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
 			if (hf == INVALID_HANDLE_VALUE)
@@ -308,7 +326,7 @@ BOOL CCaptureClass::CaptureBitmap(const   char  * outFile) //const char * outFil
 			BITMAPFILEHEADER bfh;
 			ZeroMemory(&bfh, sizeof (bfh));
 			bfh.bfType = 'MB';  // Little-endian for "MB".
-			bfh.bfSize = sizeof (bfh)+cbBuffer + sizeof (BITMAPINFOHEADER);
+			bfh.bfSize = sizeof (bfh)+size + sizeof (BITMAPINFOHEADER);
 			bfh.bfOffBits = sizeof (BITMAPFILEHEADER)+sizeof (BITMAPINFOHEADER);
 			DWORD dwWritten = 0;
 			WriteFile(hf, &bfh, sizeof (bfh), &dwWritten, NULL);
@@ -325,15 +343,29 @@ BOOL CCaptureClass::CaptureBitmap(const   char  * outFile) //const char * outFil
 			WriteFile(hf, &bih, sizeof (bih), &dwWritten, NULL);
 			//write the bitmap bits
 			dwWritten = 0;
-			WriteFile(hf, pBuffer, cbBuffer, &dwWritten, NULL);
+			WriteFile(hf, pBuffer, size, &dwWritten, NULL);
 			CloseHandle(hf);
 			pass = true;
+			//释放内存
+			delete pBuffer;
+			pBuffer = NULL;
+			TRACE("获取图片成功\n");
 		}
-		return  pass;
+		else{
+			TRACE("获取图片失败\n");
+		}
+
+		
 	}
-	hr = pGrabber->SetOneShot(FALSE);
-	return true;
+
+	// 释放格式块
+	pGrabber->SetOneShot(FALSE);
+	pGrabber->SetBufferSamples(FALSE);
+	FreeMediaType(mt);
+	TRACE("结束\n");
+	return pass;
 }
+
 /*
 系统设备枚举器为我们按类型枚举已注册在系统中的Fitler提供了统一的方法。而且它能够区分不同的硬件设备，即便是同一个Filter支持它们。这对那些使用Windows驱动模型和KSProxy Filter的设备来说是非常有用的。系统设备枚举器对它们按不同的设备实例进行对待（译注：虽然它们支持相同Filter）。
 　　当我们利用系统设备枚举器查询设备的时候，系统设备枚举器为特定类型的设备（如，音频捕获和视频压缩）生成了一张枚举表（Enumerator）。类型枚举器（Category enumerator）为每个这种类型的设备返回一个Moniker，类型枚举器自动把每一种即插即用的设备包含在内。
@@ -433,5 +465,102 @@ IPin * CCaptureClass::FindPin(IBaseFilter *inFilter, char *inFilterName)
 }
 
 
+//暂停视频
+BOOL CCaptureClass::Pause(){
+	HRESULT hr;
+	if (m_pMC) hr = m_pMC->Pause();
+	return hr;
+}
+
+//继续播放
+BOOL CCaptureClass::Play(){
+	HRESULT hr;
+	if (m_pMC)
+	{
+		hr = m_pVW->put_Visible(OATRUE);
+		hr = m_pMC->Run();
+		m_bIsPlaying = true;
+		if (m_bIsContinuePlay)
+		{
+			long evCode;
+			hr = pEvent->WaitForCompletion(INFINITE, &evCode);  //强制持续播放（不接受其他消息）
+			m_bIsPlaying = false;
+		}
+	}
+	return hr;
+}
+
+//停止
+BOOL CCaptureClass::Stop(){
+	HRESULT hr;
+	if (m_pMC)
+	{
+		hr = m_pMC->Stop();
+		hr = m_pMC->Release();
+		m_bIsPlaying = false;
+	}
+	if (pEvent)  pEvent->Release();
+	if (m_pCapture)  m_pCapture->Release();
+	if (m_pVW) m_pVW->Release();
+	hr = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **)&m_pCapture);
+	hr = m_pCapture->QueryInterface(IID_IVideoWindow, (void **)&m_pVW);
+	hr = m_pCapture->QueryInterface(IID_IMediaEventEx, (void **)&pEvent);
+	//m_pEvent->SetNotifyWindow((OAHWND)m_hwnd, WM_GRAPHNOTIFY, 0);
+	hr = m_pCapture->QueryInterface(IID_IMediaControl, (void **)&m_pMC);
+	return hr;
+}
 
 
+
+//消息处理
+bool CCaptureClass::HandleEvent()
+{
+	HRESULT hr;
+	long evCode, param1, param2;
+	while (hr = pEvent->GetEvent(&evCode, &param1, &param2, 0), SUCCEEDED(hr))
+	{
+		hr = pEvent->FreeEventParams(evCode, param1, param2);
+		if ((EC_COMPLETE == evCode) || (EC_USERABORT == evCode))
+		{
+			Stop();
+			break;
+		}
+	}
+	return false;
+}
+
+
+//视频回调
+BOOL CCaptureClass::MakeCallback()
+{
+
+	if (sGrabberCallback)
+		return TRUE;
+
+	sGrabberCallback = new SampleGrabberCallback();
+	if (NULL == sGrabberCallback)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+//拍照
+BOOL CCaptureClass::TakeAPicture(){
+
+	HRESULT hr = 0;
+
+	// 取得当前所连接媒体的类型
+	AM_MEDIA_TYPE mediaType;
+	ZeroMemory(&mediaType, sizeof(AM_MEDIA_TYPE));
+	hr = pGrabber->GetConnectedMediaType(&mediaType);
+	// Examine the format block.
+	VIDEOINFOHEADER * vih = (VIDEOINFOHEADER*)mediaType.pbFormat;
+	sGrabberCallback->m_lWidth = vih->bmiHeader.biWidth;
+	sGrabberCallback->m_lHeight = vih->bmiHeader.biHeight;
+	sGrabberCallback->m_bGetPicture = TRUE;
+
+	FreeMediaType(mediaType);
+	return true;
+}

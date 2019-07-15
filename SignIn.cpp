@@ -149,7 +149,7 @@ BOOL CSignIn::OnInitDialog()
 	
 
 	//自动连接指纹仪
-	TRACE("==================================conZKFP = %d\n", conZKFP);
+	/*TRACE("==================================conZKFP = %d\n", conZKFP);
 	if (conZKFP!=0){
 		long new_conZKFP = m_zkfp_1.InitEngine();
 		TRACE("=====================================指纹初始化返回值:%d,访问地址:%p\n", new_conZKFP, &m_zkfp_1);
@@ -176,7 +176,7 @@ BOOL CSignIn::OnInitDialog()
 			MessageBox(TEXT("请检查指纹仪是否插好!!"));
 		}
 	}
-	
+	*/
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常:  OCX 属性页应返回 FALSE
