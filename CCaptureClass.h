@@ -36,7 +36,7 @@ public:
 	BOOL Stop(); // 停止
 	HRESULT CaptureImages(CString inFileName);    // 捕获保存视频
 	BOOL CaptureBitmap(const   char  * outFile); // 捕获图片
-	HRESULT PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2); // 采集预览视频
+	HRESULT PreviewImages(int iDeviceID, HWND hWnd); // 采集预览视频
 private:
 	HWND       m_hWnd;          // 视频显示窗口的句柄
 	IGraphBuilder    *m_pGB;          // 滤波器链表管理器
@@ -50,16 +50,6 @@ private:
 	IMediaEventEx *pEvent; // 媒体事件接口
 	IVideoWindow     *m_pVW;   // 视频显示窗口接口
 	IBaseFilter     *pMux;   // 写文件滤波器
-	//第二个图
-	HWND       m_hWnd2;          // 视频显示窗口的句柄
-	IGraphBuilder    *m_pGB2;
-	ICaptureGraphBuilder2  *m_pCapture2;
-	IBaseFilter     *m_pBF2;   // 捕获滤波器
-	IBaseFilter    *pGrabberF2;// 采样滤波器
-	ISampleGrabber *pGrabber2;// 采样滤波器接口
-	IBaseFilter      *pNull2;   // 渲染滤波器  
-	IMediaControl    *m_pMC2;   // 媒体控制接口  
-	IVideoWindow     *m_pVW2;   // 视频显示窗口接口
 		
 protected:
 	bool BindFilter(int deviceId, IBaseFilter **pFilter);

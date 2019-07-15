@@ -24,17 +24,6 @@ CScanDlg::~CScanDlg()
 {
 	//free mem
 	TRACE("==================================调用析构函数\n");
-
-	/*if (NULL != cur_gcap){
-		delete cur_gcap;
-		cur_gcap = NULL;
-	}
-
-	if (NULL != cur_gcap2){
-		delete cur_gcap2;
-		cur_gcap2 = NULL;
-	}*/
-	//CoUninitialize();
 }
 
 
@@ -185,7 +174,7 @@ BOOL CScanDlg::OnInitDialog()
 	//OnUpdateStatic2(0,0);
 
 	m_cap.EnumDevices(m_listCtrl.GetSafeHwnd());
-	m_listCtrl.SetCurSel(1);
+	m_listCtrl.SetCurSel(0);
 
 	
 	
@@ -242,10 +231,10 @@ void CScanDlg::OnBnClickedButton2()
 	*/
 	HWND hVWindow = m_preview_1.GetSafeHwnd();  // 获取视频显示窗口的句柄
 	//int id = m_listCtrl.GetCurSel();          // 获取当前选中的视频设备
-	//m_cap.PreviewImages(0, hVWindow);     // 开始预览视频
+	m_cap.PreviewImages(0, hVWindow);     // 开始预览视频
 
 
 	HWND hVWindow2 = m_preview_2.GetSafeHwnd();  // 获取视频显示窗口的句柄
-	m_cap.PreviewImages(0, hVWindow, hVWindow2);     // 开始预览视频
+	m_cap2.PreviewImages(1, hVWindow2);     // 开始预览视频
 	
 }

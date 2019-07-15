@@ -16,18 +16,6 @@ CCaptureClass::CCaptureClass()
 	pEvent = NULL; // 媒体事件接口指针清空
 	m_pCapture = NULL;   // 增强型捕获滤波器链表管理器接口指针清空
 
-	//第二个图
-	m_hWnd2 = NULL;
-	m_pGB2 = NULL; 
-	m_pBF2 = NULL;
-	pGrabberF2 = NULL;
-	pNull2 = NULL;
-	pGrabber2 = NULL;
-	m_pCapture2 = NULL;
-	m_pVW2 = NULL;
-	m_pMC2 = NULL;
-
-
 }
 /* 析构函数实现 */
 CCaptureClass::~CCaptureClass()
@@ -45,24 +33,6 @@ CCaptureClass::~CCaptureClass()
 	srelease(m_pMC);       // 释放媒体控制接口
 	srelease(m_pGB);       // 释放滤波器链表管理器接口
 	srelease(m_pBF);      // 释放捕获滤波器接口
-
-	//第二个图
-
-	if (m_pMC2)  m_pMC2->Stop();   // 首先停止媒体
-	if (m_pVW2) {
-		m_pVW2->put_Visible(OAFALSE); // 视频窗口不可见
-		m_pVW2->put_Owner(NULL);  // 视频窗口的父窗口清空
-	}
-
-	srelease(m_pCapture2);
-	srelease(pGrabber2);
-	srelease(pGrabberF2);
-	srelease(pNull2);
-	srelease(m_pGB2);
-	srelease(m_pBF2);
-	srelease(m_pMC2);
-	
-
 
 	CoUninitialize();     // 卸载 COM 库
 }
@@ -140,17 +110,6 @@ HRESULT CCaptureClass::SetupVideoWindow()
 	if (FAILED(hr)) return hr;
 	ResizeVideoWindow();                           // 更改窗口大小
 	hr = m_pVW->put_Visible(OATRUE);              // 视频窗口可见
-
-
-	//图二
-	//m_hWnd 为类 CCaptureClass 的成员变量，在使用该函数前须初始化
-	hr = m_pVW2->put_Visible(OAFALSE);                  // 视频窗口不可见
-	hr = m_pVW2->put_Owner((OAHWND)m_hWnd2);      // 窗口所有者：传入的窗口句柄
-	if (FAILED(hr)) return hr;
-	hr = m_pVW2->put_WindowStyle(WS_CHILD | WS_CLIPCHILDREN);// 设置窗口类型
-	if (FAILED(hr)) return hr;
-	m_pVW2->SetWindowPosition(0, 0,600, 600);                        // 更改窗口大小
-	hr = m_pVW2->put_Visible(OATRUE);              // 视频窗口可见
 	return hr;
 }
 /* 更改视频窗口大小 */
@@ -173,47 +132,30 @@ HRESULT CCaptureClass::InitCaptureGraphBuilder()
 {
 	HRESULT hr;
 	//创建IGraphBuilder接口
-	hr = CoCreateInstance(CLSID_FilterGraph, NULL,
-		CLSCTX_INPROC_SERVER,
-		IID_IGraphBuilder, (void **)&m_pGB);
+	hr = CoCreateInstance(CLSID_FilterGraph, NULL,CLSCTX_INPROC_SERVER,IID_IGraphBuilder, (void **)&m_pGB);
+	TRACE("InitCaptureGraphBuilder init:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//创建ICaptureGraphBuilder2接口
 	hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL,
 		CLSCTX_INPROC,
 		IID_ICaptureGraphBuilder2, (void **)&m_pCapture);
+	TRACE("InitCaptureGraphBuilder0:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//初始化滤波器链表管理器IGraphBuilder
 	m_pCapture->SetFiltergraph(m_pGB);
 	//查询媒体控制接口
 	hr = m_pGB->QueryInterface(IID_IMediaControl, (void **)&m_pMC);
+	TRACE("InitCaptureGraphBuilder1:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
 	//查询视频窗口接口
 	hr = m_pGB->QueryInterface(IID_IVideoWindow, (LPVOID *)&m_pVW);
+	TRACE("InitCaptureGraphBuilder2:0x%x\n", hr);
 	if (FAILED(hr)) return hr;
-
-	//创建图2
-	hr = CoCreateInstance(CLSID_FilterGraph, NULL,
-		CLSCTX_INPROC_SERVER,
-		IID_IGraphBuilder, (void **)&m_pGB2);
-	if (FAILED(hr)) return hr;
-	hr = CoCreateInstance(CLSID_CaptureGraphBuilder2, NULL,
-		CLSCTX_INPROC,
-		IID_ICaptureGraphBuilder2, (void **)&m_pCapture2);
-	if (FAILED(hr)) return hr;
-	m_pCapture2->SetFiltergraph(m_pGB2);
-
-	//查询媒体控制接口
-	hr = m_pGB2->QueryInterface(IID_IMediaControl, (void **)&m_pMC2);
-	if (FAILED(hr)) return hr;
-	//查询视频窗口接口
-	hr = m_pGB2->QueryInterface(IID_IVideoWindow, (LPVOID *)&m_pVW2);
-	if (FAILED(hr)) return hr;
-
 	return hr;
 }
 
 /* 开始预览视频数据 */
-HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
+HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd)
 {
 	HRESULT hr;
 
@@ -227,8 +169,6 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 	//  把指定采集设备与滤波器捆绑
 	if (!BindFilter(iDeviceID, &m_pBF))
 		return  S_FALSE;
-	if (!BindFilter(1, &m_pBF2))
-		return  S_FALSE;
 	//  把滤波器添加到滤波器链表中
 	hr = m_pGB->AddFilter(m_pBF, L"Capture Filter");
 	if (FAILED(hr))
@@ -237,12 +177,7 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 		return  hr;
 	}
 
-	hr = m_pGB2->AddFilter(m_pBF2, L"Capture Filter");
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t add the capture filter"));
-		return  hr;
-	}
+
 	// Create the Sample Grabber.
 	hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,
 		IID_IBaseFilter, (void **)&pGrabberF);
@@ -252,17 +187,9 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 		return  hr;
 	}
 
-	// Create the Sample Grabber.
-	hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,
-		IID_IBaseFilter, (void **)&pGrabberF2);
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t create the grabber2"));
-		return  hr;
-	}
+	
 
 	hr = pGrabberF->QueryInterface(IID_ISampleGrabber, (void **)&pGrabber);
-	hr = pGrabberF2->QueryInterface(IID_ISampleGrabber, (void **)&pGrabber2);
 	//  把滤波器添加到滤波器链表中
 
 
@@ -273,12 +200,7 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 		return  hr;
 	}
 
-	hr = m_pGB2->AddFilter(pGrabberF2, L"Sample Grabber");
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t add the grabber"));
-		return  hr;
-	}
+	
 	// Add the Null Renderer filter to the graph.
 	hr = CoCreateInstance(CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
 		IID_IBaseFilter, (void **)&pNull);
@@ -289,15 +211,7 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 		return  hr;
 	}
 
-	// Add the Null Renderer filter to the graph.
-	hr = CoCreateInstance(CLSID_VideoRenderer, NULL, CLSCTX_INPROC_SERVER,
-		IID_IBaseFilter, (void **)&pNull2);
-	hr = m_pGB2->AddFilter(pNull2, L"VideoRender");
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t add the VideoRender2"));
-		return  hr;
-	}
+	
 	//  渲染媒体，把链表中滤波器连接起来
 	hr = m_pCapture->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_pBF, pGrabberF, pNull);
 	if (FAILED(hr))
@@ -306,15 +220,9 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 		return  hr;
 	}
 
-	hr = m_pCapture2->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_pBF2, pGrabberF2, pNull2);
-	if (FAILED(hr))
-	{
-		AfxMessageBox(_T("Can ’ t build the graph2"));
-		return  hr;
-	}
+	
 	// 设置视频显示窗口
 	m_hWnd = hWnd;         // 初始化窗口句柄
-	m_hWnd2 = hWnd2;         // 初始化窗口句柄
 	SetupVideoWindow();   // 设置显示窗口
 
 
@@ -323,13 +231,6 @@ HRESULT CCaptureClass::PreviewImages(int iDeviceID, HWND hWnd, HWND hWnd2)
 	TRACE("不能运行图:0x%x\n",hr);
 	if (FAILED(hr)) {
 		AfxMessageBox(_T("Couldn't run the graph!"));
-		return hr;
-	}
-
-	hr = m_pMC2->Run();
-	TRACE("不能运行图2:0x%x\n", hr);
-	if (FAILED(hr)) {
-		AfxMessageBox(_T("Couldn't run the graph2!"));
 		return hr;
 	}
 	return S_OK;
